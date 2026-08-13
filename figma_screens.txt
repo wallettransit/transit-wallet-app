@@ -1,0 +1,12 @@
+onboarding-scan-to-pay
+OnboardingText
+onboarding-track-rides
+onboarding-set-save
+driver-onboarding
+passenger-onboarding
+driver-onboarding-welcome
+driver-onboarding-personal-details
+driver-onboarding-vehicle-registration
+driver-onboarding-documents
+driver-onboarding-verification
+ONBOARDING STAGE
