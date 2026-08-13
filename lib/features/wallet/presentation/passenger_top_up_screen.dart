@@ -180,15 +180,8 @@ class _PassengerTopUpScreenState extends State<PassengerTopUpScreen> {
             // Bottom Action
             Container(
               padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.ink,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
               ),
               child: TWButton(
                 label: 'Fund Wallet',

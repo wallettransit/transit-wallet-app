@@ -1,15 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/components/tw_button.dart';
 import '../../../../core/components/tw_text_field.dart';
+import '../providers/auth_provider.dart';
 
-class ForgotPasswordScreen extends StatelessWidget {
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
+  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  void _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      await ref.read(authControllerProvider.notifier).resetPassword(
+        _emailController.text.trim(),
+      );
+      
+      final authState = ref.read(authControllerProvider);
+      if (authState.hasError) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed: ${authState.error}'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password reset email sent!'),
+              backgroundColor: AppColors.kekeGreen,
+            ),
+          );
+          Navigator.pop(context);
+        }
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.ink,
       appBar: AppBar(
@@ -23,54 +72,52 @@ class ForgotPasswordScreen extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // heading-block
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Reset Password',
-                    style: AppTypography.heading1,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Enter your registered phone number to receive a 6-digit OTP to reset your password.',
-                    style: AppTypography.bodyLarge.copyWith(color: AppColors.muted),
-                  ),
-                ],
-              ).animate().fade(duration: 400.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
-              const SizedBox(height: 40),
-              
-              // form
-              TWTextField(
-                label: 'Phone Number',
-                hintText: '802 899 1234',
-                keyboardType: TextInputType.phone,
-                prefixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // heading-block
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(width: 16),
-                    Text('+234', style: AppTypography.bodyMedium.copyWith(color: AppColors.muted, fontSize: 16)),
-                    const SizedBox(width: 8),
-                    Container(width: 1, height: 24, color: AppColors.borderStroke),
-                    const SizedBox(width: 12),
+                    Text(
+                      'Reset Password',
+                      style: AppTypography.heading1,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Enter your registered email address to receive a password reset link.',
+                      style: AppTypography.bodyLarge.copyWith(color: AppColors.muted),
+                    ),
                   ],
-                ),
-              ).animate().fade(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
-              
-              const Spacer(),
-              
-              // action
-              TWButton(
-                label: 'Send OTP',
-                onPressed: () {
-                  // TODO: Navigate to OTP screen for reset flow
-                },
-              ).animate().fade(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
-              const SizedBox(height: 16),
-            ],
+                ).animate().fade(duration: 400.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
+                const SizedBox(height: 40),
+                
+                // form
+                TWTextField(
+                  label: 'Email Address',
+                  hintText: 'tunde@example.com',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Email is required';
+                    if (!value.contains('@')) return 'Enter a valid email';
+                    return null;
+                  },
+                ).animate().fade(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
+                
+                const Spacer(),
+                
+                // action
+                TWButton(
+                  label: 'Send Reset Link',
+                  onPressed: isLoading ? () {} : _submitForm,
+                  isLoading: isLoading,
+                ).animate().fade(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),

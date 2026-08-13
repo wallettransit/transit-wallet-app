@@ -7,9 +7,20 @@ import 'core/theme/app_colors.dart';
 import 'features/auth/presentation/welcome_screen.dart';
 import 'package:flutter/services.dart';
 import 'core/providers/network_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await Supabase.initialize(
+      url: 'https://shoehdyteenfeofqmsko.supabase.co',
+      anonKey: 'sb_publishable_I9jMQGv0GXQL7j8GEDFsAg_JJTVJxzc',
+    );
+  } catch (e) {
+    debugPrint("Failed to initialize Supabase: $e");
+  }
   
   // Make the app full screen (edge-to-edge)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -46,7 +57,13 @@ class TransitWalletApp extends StatelessWidget {
       home: const WelcomeScreen(),
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
-        return _OfflineBannerWrapper(child: child!);
+        final mediaQueryData = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQueryData.copyWith(
+            textScaler: TextScaler.noScaling,
+          ),
+          child: _OfflineBannerWrapper(child: child!),
+        );
       },
     );
   }

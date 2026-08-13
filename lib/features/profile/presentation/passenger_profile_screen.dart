@@ -7,6 +7,7 @@ import '../../../../core/components/tw_text_field.dart';
 import '../../../../core/components/tw_profile_avatar.dart';
 import '../../auth/presentation/welcome_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../../../core/providers/network_provider.dart';
 
 class PassengerProfileScreen extends ConsumerWidget {
@@ -15,6 +16,22 @@ class PassengerProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOffline = ref.watch(offlineStateProvider);
+    final currentUser = ref.watch(authRepositoryProvider).currentUser;
+    final metadata = currentUser?.userMetadata ?? {};
+    final fullName = metadata['full_name'] as String? ?? 'Passenger';
+    
+    final email = currentUser?.email ?? '';
+    
+    String initials = 'P';
+    if (fullName.isNotEmpty && fullName != 'Passenger') {
+      final parts = fullName.split(' ');
+      if (parts.length > 1 && parts[1].isNotEmpty) {
+        initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+      } else {
+        initials = fullName.substring(0, 1).toUpperCase();
+      }
+    }
+
     return Scaffold(
       backgroundColor: AppColors.ink,
       appBar: AppBar(
@@ -42,7 +59,7 @@ class PassengerProfileScreen extends ConsumerWidget {
                     // Avatar section
                     Center(
                       child: TWProfileAvatar(
-                        initials: 'AO',
+                        initials: initials,
                         radius: 40.0,
                         onUploadTapped: () {
                           // TODO: Trigger image picker
@@ -60,24 +77,24 @@ class PassengerProfileScreen extends ConsumerWidget {
                           style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold, color: AppColors.paper),
                         ),
                         const SizedBox(height: 16),
-                        const TWTextField(
+                        TWTextField(
                           label: 'Full Name',
-                          hintText: 'Amara Okafor',
-                          prefixIcon: Icon(Icons.person_outline, color: AppColors.muted),
+                          hintText: fullName,
+                          prefixIcon: const Icon(Icons.person_outline, color: AppColors.muted),
                         ),
                         const SizedBox(height: 16),
-                        const TWTextField(
+                        TWTextField(
                           label: 'Phone Number',
-                          hintText: '802 899 1234',
+                          hintText: currentUser?.phone ?? '+234 --- --- ----',
                           keyboardType: TextInputType.phone,
-                          prefixIcon: Icon(Icons.phone_outlined, color: AppColors.muted),
+                          prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.muted),
                         ),
                         const SizedBox(height: 16),
-                        const TWTextField(
+                        TWTextField(
                           label: 'Email Address',
-                          hintText: 'amara@example.com',
+                          hintText: email,
                           keyboardType: TextInputType.emailAddress,
-                          prefixIcon: Icon(Icons.email_outlined, color: AppColors.muted),
+                          prefixIcon: const Icon(Icons.email_outlined, color: AppColors.muted),
                         ),
                         const SizedBox(height: 32),
                         Text(

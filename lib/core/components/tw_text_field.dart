@@ -8,9 +8,12 @@ class TWTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool obscureText;
+  final bool enabled;
+  final bool readOnly;
   final TextInputType? keyboardType;
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
+  final String? Function(String?)? validator;
 
   const TWTextField({
     super.key,
@@ -19,9 +22,12 @@ class TWTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.obscureText = false,
+    this.enabled = true,
+    this.readOnly = false,
     this.keyboardType,
     this.controller,
     this.onChanged,
+    this.validator,
   });
 
   @override
@@ -34,10 +40,13 @@ class TWTextField extends StatelessWidget {
           style: AppTypography.label,
         ),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
           onChanged: onChanged,
+          validator: validator,
           obscureText: obscureText,
+          enabled: enabled,
+          readOnly: readOnly,
           keyboardType: keyboardType,
           style: AppTypography.bodyMedium,
           decoration: InputDecoration(
@@ -47,7 +56,7 @@ class TWTextField extends StatelessWidget {
             fillColor: AppColors.cardBackground, // dynamic input background
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -59,6 +68,14 @@ class TWTextField extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppColors.kekeGreen, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
             ),
           ),
         ),

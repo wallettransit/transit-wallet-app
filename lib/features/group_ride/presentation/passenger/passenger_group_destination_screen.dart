@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
+import '../../../../core/components/tw_text_field.dart';
 import 'passenger_group_date_time_screen.dart';
+import '../../providers/group_ride_draft_provider.dart';
 
-class PassengerGroupDestinationScreen extends StatelessWidget {
+class PassengerGroupDestinationScreen extends ConsumerStatefulWidget {
   const PassengerGroupDestinationScreen({super.key});
 
   @override
+  ConsumerState<PassengerGroupDestinationScreen> createState() => _PassengerGroupDestinationScreenState();
+}
+
+class _PassengerGroupDestinationScreenState extends ConsumerState<PassengerGroupDestinationScreen> {
+  final TextEditingController _destinationController = TextEditingController();
+
+  @override
+  void dispose() {
+    _destinationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final draft = ref.watch(groupRideDraftProvider);
     return Scaffold(
       backgroundColor: AppColors.cardBackground,
       body: SafeArea(
@@ -64,69 +81,21 @@ class PassengerGroupDestinationScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
                       child: Column(
                         children: [
-                          Container(
-                            height: 52,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: AppColors.highlightBackground,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.kekeGreen,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'From: Yaba Terminal',
-                                    style: GoogleFonts.manrope(
-                                      color: AppColors.muted,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          TWTextField(
+                            label: 'From',
+                            hintText: draft.pickupLocation.isEmpty ? 'Your pickup location' : draft.pickupLocation,
+                            enabled: false,
+                            prefixIcon: Icon(Icons.circle, color: AppColors.kekeGreen, size: 12),
                           ),
                           const SizedBox(height: 12),
-                          Container(
-                            height: 52,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: AppColors.ink,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.kekeGreen, width: 2),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.danfoYellow,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'To: Lekki Phase 1',
-                                    style: GoogleFonts.manrope(
-                                      color: AppColors.paper,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                const Icon(Icons.close, color: AppColors.paper, size: 18),
-                              ],
-                            ),
+                          TWTextField(
+                            controller: _destinationController,
+                            label: 'To',
+                            hintText: 'Enter your destination...',
+                            prefixIcon: Icon(Icons.stop_circle, color: AppColors.danfoYellow, size: 14),
+                            onChanged: (val) {
+                              ref.read(groupRideDraftProvider.notifier).setDestination(val);
+                            },
                           ),
                         ],
                       ),
@@ -147,11 +116,29 @@ class PassengerGroupDestinationScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _buildDestItem('Lekki Toll Gate', 'Lekki-Epe Expressway, Lagos', true),
+                          GestureDetector(
+                            onTap: () {
+                              _destinationController.text = 'Lekki Toll Gate';
+                              ref.read(groupRideDraftProvider.notifier).setDestination('Lekki Toll Gate');
+                            },
+                            child: _buildDestItem('Lekki Toll Gate', 'Lekki-Epe Expressway, Lagos', true),
+                          ),
                           const SizedBox(height: 12),
-                          _buildDestItem('Victoria Island', 'Adetokunbo Ademola St', true),
+                          GestureDetector(
+                            onTap: () {
+                              _destinationController.text = 'Victoria Island';
+                              ref.read(groupRideDraftProvider.notifier).setDestination('Victoria Island');
+                            },
+                            child: _buildDestItem('Victoria Island', 'Adetokunbo Ademola St', true),
+                          ),
                           const SizedBox(height: 12),
-                          _buildDestItem('Ikeja Along', 'Agege Motor Road', false),
+                          GestureDetector(
+                            onTap: () {
+                              _destinationController.text = 'Ikeja Along';
+                              ref.read(groupRideDraftProvider.notifier).setDestination('Ikeja Along');
+                            },
+                            child: _buildDestItem('Ikeja Along', 'Agege Motor Road', false),
+                          ),
                         ],
                       ),
                     ).animate().fade(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1),
@@ -164,6 +151,12 @@ class PassengerGroupDestinationScreen extends StatelessWidget {
                         child: TWButton(
                           label: 'Proceed to Date & Time',
                           onPressed: () {
+                            if (_destinationController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please enter a destination')),
+                              );
+                              return;
+                            }
                             Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) => const PassengerGroupDateTimeScreen()),

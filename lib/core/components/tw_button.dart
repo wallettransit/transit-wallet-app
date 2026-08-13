@@ -67,7 +67,7 @@ class _TWButtonState extends State<TWButton> {
         curve: Curves.easeOutCubic,
         child: SizedBox(
           width: double.infinity,
-          height: 54,
+          height: 48,
           child: IgnorePointer(
             child: ElevatedButton(
               // We handle the tap in GestureDetector for the animation

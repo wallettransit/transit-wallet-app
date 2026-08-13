@@ -129,15 +129,8 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
             if (_isVerified)
               Container(
                 padding: const EdgeInsets.all(24.0),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.ink,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, -4),
-                    ),
-                  ],
                 ),
                 child: TWButton(
                   label: 'Save & Link Bank',

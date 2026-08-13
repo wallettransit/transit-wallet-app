@@ -3,8 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
 import 'tw_button.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../features/auth/providers/auth_provider.dart';
+import '../../features/wallet/data/wallet_repository.dart';
 
-class TWTransferBottomSheet extends StatefulWidget {
+class TWTransferBottomSheet extends ConsumerStatefulWidget {
   const TWTransferBottomSheet({super.key});
 
   static void show(BuildContext context) {
@@ -17,35 +20,69 @@ class TWTransferBottomSheet extends StatefulWidget {
   }
 
   @override
-  State<TWTransferBottomSheet> createState() => _TWTransferBottomSheetState();
+  ConsumerState<TWTransferBottomSheet> createState() => _TWTransferBottomSheetState();
 }
 
-class _TWTransferBottomSheetState extends State<TWTransferBottomSheet> {
+class _TWTransferBottomSheetState extends ConsumerState<TWTransferBottomSheet> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   bool _isProcessing = false;
   bool _isSuccess = false;
 
-  void _processTransfer() {
+  String? _errorMessage;
+
+  Future<void> _processTransfer() async {
     if (_phoneController.text.isEmpty || _amountController.text.isEmpty) return;
 
-    setState(() => _isProcessing = true);
+    final amount = double.tryParse(_amountController.text.replaceAll(',', ''));
+    if (amount == null || amount <= 0) {
+      setState(() => _errorMessage = 'Please enter a valid amount.');
+      return;
+    }
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
+    setState(() {
+      _isProcessing = true;
+      _errorMessage = null;
+    });
+
+    final user = ref.read(authRepositoryProvider).currentUser;
+    if (user == null) {
+      setState(() {
+        _isProcessing = false;
+        _errorMessage = 'Authentication error. Please login again.';
+      });
+      return;
+    }
+
+    final repository = ref.read(walletRepositoryProvider);
+    final result = await repository.transferToFriend(
+      senderId: user.id,
+      recipientPhone: _phoneController.text,
+      amount: amount,
+    );
+
+    if (mounted) {
+      if (result['success'] == true) {
+        // Refresh wallet balance
+        ref.invalidate(walletBalanceProvider);
+        
         setState(() {
           _isProcessing = false;
           _isSuccess = true;
         });
 
-        // Close after a brief moment showing success
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             Navigator.pop(context);
           }
         });
+      } else {
+        setState(() {
+          _isProcessing = false;
+          _errorMessage = result['message'];
+        });
       }
-    });
+    }
   }
 
   @override
@@ -162,7 +199,18 @@ class _TWTransferBottomSheetState extends State<TWTransferBottomSheet> {
         ),
       ),
       
-      const SizedBox(height: 32),
+      const SizedBox(height: 16),
+      
+      if (_errorMessage != null)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: Text(
+            _errorMessage!,
+            style: GoogleFonts.manrope(color: Colors.red, fontSize: 14),
+          ),
+        ),
+      
+      const SizedBox(height: 16),
       
       TWButton(
         label: 'Send Funds',

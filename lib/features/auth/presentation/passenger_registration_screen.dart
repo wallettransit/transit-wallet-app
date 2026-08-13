@@ -1,44 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/components/tw_button.dart';
 import '../../../core/components/tw_text_field.dart';
-import '../../../core/components/tw_text_field.dart';
 import '../../../core/components/tw_logo.dart';
+import '../providers/auth_provider.dart';
 import 'passenger_otp_verification_screen.dart';
+import '../../../core/components/tw_snackbar.dart';
 
-class PassengerRegistrationScreen extends StatefulWidget {
+class PassengerRegistrationScreen extends ConsumerStatefulWidget {
   const PassengerRegistrationScreen({super.key});
 
   @override
-  State<PassengerRegistrationScreen> createState() => _PassengerRegistrationScreenState();
+  ConsumerState<PassengerRegistrationScreen> createState() => _PassengerRegistrationScreenState();
 }
 
-class _PassengerRegistrationScreenState extends State<PassengerRegistrationScreen> {
+class _PassengerRegistrationScreenState extends ConsumerState<PassengerRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+  final _fullNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      // Simulate network request
-      await Future.delayed(const Duration(seconds: 1));
-      setState(() => _isLoading = false);
+      await ref.read(authControllerProvider.notifier).signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        fullName: _fullNameController.text.trim(),
+        phone: _phoneController.text.trim(),
+      );
       
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const PassengerOtpVerificationScreen(),
-          ),
-        );
+      final authState = ref.read(authControllerProvider);
+      if (authState.hasError) {
+        if (mounted) {
+          TWSnackbar.showError(context, authState.error.toString());
+        }
+      } else {
+        if (mounted) {
+          // You might want to navigate to a "Check Email" screen or OTP screen
+          // For now, we will navigate to the next screen.
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PassengerOtpVerificationScreen(
+                phoneNumber: _phoneController.text.trim(),
+              ),
+            ),
+          );
+        }
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.ink,
       body: SafeArea(
@@ -88,42 +120,64 @@ class _PassengerRegistrationScreenState extends State<PassengerRegistrationScree
                       const SizedBox(height: 32),
                       
                       // Form Fields
-                      const TWTextField(
+                      TWTextField(
                         label: 'Full Name',
                         hintText: 'Tunde Johnson',
+                        controller: _fullNameController,
+                        validator: (value) => value == null || value.isEmpty ? 'Full name is required' : null,
                       ).animate().fade(delay: 300.ms).slideX(begin: 0.1, end: 0),
                       
                       const SizedBox(height: 16),
                       
-                      const TWTextField(
+                      TWTextField(
                         label: 'Phone Number',
                         hintText: '803 123 4567',
-                        prefixIcon: Icon(Icons.phone, color: AppColors.muted),
+                        controller: _phoneController,
+                        prefixIcon: const Icon(Icons.phone, color: AppColors.muted),
                         keyboardType: TextInputType.phone,
+                        validator: (value) => value == null || value.isEmpty ? 'Phone number is required' : null,
                       ).animate().fade(delay: 400.ms).slideX(begin: 0.1, end: 0),
                       
                       const SizedBox(height: 16),
                       
-                      const TWTextField(
-                        label: 'Email Address (Optional)',
+                      TWTextField(
+                        label: 'Email Address',
                         hintText: 'tunde@example.com',
+                        controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Email is required';
+                          if (!value.contains('@')) return 'Enter a valid email';
+                          return null;
+                        },
                       ).animate().fade(delay: 500.ms).slideX(begin: 0.1, end: 0),
                       
                       const SizedBox(height: 16),
                       
-                      const TWTextField(
+                      TWTextField(
                         label: 'Choose Password',
                         hintText: 'At least 8 characters',
+                        controller: _passwordController,
                         obscureText: true,
+                        onChanged: (val) => setState(() {}),
+                        validator: (value) => value != null && value.length < 8 ? 'Password must be at least 8 characters' : null,
                       ).animate().fade(delay: 600.ms).slideX(begin: 0.1, end: 0),
+                      
+                      _PasswordStrengthIndicator(password: _passwordController.text),
                       
                       const SizedBox(height: 16),
                       
-                      const TWTextField(
+                      TWTextField(
                         label: 'Confirm Password',
                         hintText: 'Re-enter password',
+                        controller: _confirmPasswordController,
                         obscureText: true,
+                        validator: (value) {
+                          if (value != _passwordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
                       ).animate().fade(delay: 700.ms).slideX(begin: 0.1, end: 0),
                       
                       const SizedBox(height: 24),
@@ -150,22 +204,15 @@ class _PassengerRegistrationScreenState extends State<PassengerRegistrationScree
             // Bottom Action
             Container(
               padding: const EdgeInsets.all(24.0),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.ink,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
               ),
               child: Column(
                 children: [
                   TWButton(
                     label: 'Create Account',
-                    onPressed: _submitForm,
-                    isLoading: _isLoading,
+                    onPressed: isLoading ? () {} : _submitForm,
+                    isLoading: isLoading,
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -175,9 +222,14 @@ class _PassengerRegistrationScreenState extends State<PassengerRegistrationScree
                         "Already have an account? ",
                         style: AppTypography.bodyMedium.copyWith(color: AppColors.muted),
                       ),
-                      Text(
-                        "Log In",
-                        style: AppTypography.bodyMedium.copyWith(color: AppColors.kekeGreen, fontWeight: FontWeight.bold),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          "Log In",
+                          style: AppTypography.bodyMedium.copyWith(color: AppColors.kekeGreen, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                   ),
@@ -188,5 +240,59 @@ class _PassengerRegistrationScreenState extends State<PassengerRegistrationScree
         ),
       ),
     );
+  }
+}
+
+class _PasswordStrengthIndicator extends StatelessWidget {
+  final String password;
+  const _PasswordStrengthIndicator({required this.password});
+  
+  @override
+  Widget build(BuildContext context) {
+    if (password.isEmpty) return const SizedBox.shrink();
+
+    double strength = 0;
+    if (password.length >= 8) strength += 0.25;
+    if (password.contains(RegExp(r'[A-Z]'))) strength += 0.25;
+    if (password.contains(RegExp(r'[0-9]'))) strength += 0.25;
+    if (password.contains(RegExp(r'[!@#\$&*~_]'))) strength += 0.25;
+
+    Color color = AppColors.errorRed;
+    String text = 'Weak';
+    
+    if (strength <= 0.25) {
+      color = AppColors.errorRed;
+      text = 'Weak';
+    } else if (strength <= 0.5) {
+      color = Colors.orange;
+      text = 'Fair';
+    } else if (strength <= 0.75) {
+      color = Colors.yellow;
+      text = 'Good';
+    } else {
+      color = AppColors.kekeGreen;
+      text = 'Strong';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: strength,
+                backgroundColor: AppColors.cardBackground,
+                color: color,
+                minHeight: 4,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(text, style: AppTypography.bodySmall.copyWith(color: color, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    ).animate().fade(duration: 200.ms);
   }
 }

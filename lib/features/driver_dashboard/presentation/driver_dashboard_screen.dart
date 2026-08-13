@@ -146,22 +146,23 @@ class DriverDashboardScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "TODAY'S NET TAKE-HOME",
-                            style: GoogleFonts.manrope(
-                              color: AppTheme.ink,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              height: 1.2,
+                          Expanded(
+                            child: Text(
+                              "TODAY'S NET EARNINGS",
+                              style: GoogleFonts.manrope(
+                                color: AppTheme.ink,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
                           Text(
                             "Levies & fuel deducted",
                             style: GoogleFonts.manrope(
                               color: AppTheme.ink.withOpacity(0.7),
-                              fontSize: 14,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              height: 1.2,
                             ),
                           ),
                         ],
@@ -208,19 +209,21 @@ class DriverDashboardScreen extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              "32 Rides Completed",
-                              style: GoogleFonts.manrope(
-                                color: AppTheme.ink,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
+                            Expanded(
+                              child: Text(
+                                "32 Rides Completed",
+                                style: GoogleFonts.manrope(
+                                  color: AppTheme.ink,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                             Text(
                               "Last trip: 4 mins ago",
                               style: GoogleFonts.manrope(
                                 color: AppTheme.ink.withOpacity(0.8),
-                                fontSize: 14,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

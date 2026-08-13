@@ -1,16 +1,21 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../wallet/presentation/passenger_qr_scan_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
 import 'passenger_group_pickup_screen.dart';
 import '../../../../core/components/tw_logo.dart';
+import '../../../wallet/data/ride_repository.dart';
 
-class PassengerGroupRideHomeScreen extends StatelessWidget {
+class PassengerGroupRideHomeScreen extends ConsumerWidget {
   const PassengerGroupRideHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recentRidesAsync = ref.watch(recentRidesProvider);
     return Scaffold(
       backgroundColor: AppColors.cardBackground,
       body: SafeArea(
@@ -146,22 +151,35 @@ class PassengerGroupRideHomeScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _buildRecentRouteCard(
-                            icon: Icons.directions_bus_filled_outlined,
-                            iconBg: AppColors.kekeGreen.withOpacity(0.1),
-                            iconColor: AppColors.kekeGreen,
-                            routeText: 'Yaba Terminal → Lekki Phase 1',
-                            subText: 'Last traveled: Yesterday · Danfo Group',
-                            price: '₦450',
-                          ),
-                          const SizedBox(height: 12),
-                          _buildRecentRouteCard(
-                            icon: Icons.electric_rickshaw_outlined,
-                            iconBg: AppColors.danfoYellow.withOpacity(0.15),
-                            iconColor: AppColors.danfoYellow,
-                            routeText: 'Ikeja City Mall → Allen Avenue',
-                            subText: 'Last traveled: 3 days ago · Keke Group',
-                            price: '₦200',
+                          recentRidesAsync.when(
+                            data: (rides) {
+                              if (rides.isEmpty) {
+                                return Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    child: Text(
+                                      'No recent routes yet. Create your first group ride!',
+                                      style: GoogleFonts.manrope(color: AppColors.muted),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return Column(
+                                children: rides.take(3).map((ride) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildRecentRouteCard(
+                                    icon: Icons.directions_bus_filled_outlined,
+                                    iconBg: AppColors.kekeGreen.withOpacity(0.1),
+                                    iconColor: AppColors.kekeGreen,
+                                    routeText: '${ride['start_location'] ?? 'Unknown'} → ${ride['end_location'] ?? 'Unknown'}',
+                                    subText: 'Recently traveled',
+                                    price: '₦${ride['fare']}',
+                                  ),
+                                )).toList(),
+                              );
+                            },
+                            loading: () => const Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
+                            error: (err, _) => Text('Error loading routes: $err', style: const TextStyle(color: Colors.red)),
                           ),
                         ].animate(interval: 50.ms, delay: 200.ms).fade(duration: 400.ms).slideY(begin: 0.1),
                       ),
@@ -170,6 +188,7 @@ class PassengerGroupRideHomeScreen extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 80),
           ],
         ),
       ),

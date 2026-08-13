@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
 import 'passenger_group_confirmed_screen.dart';
+import '../../providers/group_ride_draft_provider.dart';
+import '../../data/group_ride_repository.dart';
+import '../../../auth/providers/auth_provider.dart';
 
-class PassengerGroupPaymentScreen extends StatefulWidget {
+class PassengerGroupPaymentScreen extends ConsumerStatefulWidget {
   const PassengerGroupPaymentScreen({super.key});
 
   @override
-  State<PassengerGroupPaymentScreen> createState() => _PassengerGroupPaymentScreenState();
+  ConsumerState<PassengerGroupPaymentScreen> createState() => _PassengerGroupPaymentScreenState();
 }
 
-class _PassengerGroupPaymentScreenState extends State<PassengerGroupPaymentScreen> {
+class _PassengerGroupPaymentScreenState extends ConsumerState<PassengerGroupPaymentScreen> {
   int _selectedMethod = 0;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -135,13 +140,40 @@ class _PassengerGroupPaymentScreenState extends State<PassengerGroupPaymentScree
                       SizedBox(
                         width: double.infinity,
                         child: TWButton(
-                          label: 'Confirm & Pay ₦384',
+                          label: _isLoading ? 'Processing...' : 'Confirm & Pay ₦384',
                           icon: Icons.lock_outline,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const PassengerGroupConfirmedScreen()),
-                            );
+                          onPressed: _isLoading ? () {} : () async {
+                            setState(() => _isLoading = true);
+                            
+                            final draft = ref.read(groupRideDraftProvider);
+                            final currentUser = ref.read(authRepositoryProvider).currentUser;
+                            
+                            if (currentUser != null) {
+                              final repo = ref.read(groupRideRepositoryProvider);
+                              final res = await repo.createGroupRide(
+                                creatorId: currentUser.id,
+                                pickupLocation: draft.pickupLocation.isEmpty ? 'Yaba' : draft.pickupLocation,
+                                destination: draft.destination.isEmpty ? 'Lekki' : draft.destination,
+                                capacity: draft.capacity,
+                                farePerPerson: 384.0,
+                              );
+                              
+                              if (res['success'] == true) {
+                                ref.read(groupRideDraftProvider.notifier).reset();
+                                if (mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const PassengerGroupConfirmedScreen()),
+                                  );
+                                }
+                              } else {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${res['message']}')));
+                                }
+                              }
+                            }
+                            
+                            if (mounted) setState(() => _isLoading = false);
                           },
                         ),
                       ).animate().fade(duration: 400.ms, delay: 400.ms),

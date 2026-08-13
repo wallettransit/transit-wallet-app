@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
+import '../../../../core/components/tw_text_field.dart';
 import 'passenger_group_destination_screen.dart';
+import '../../providers/group_ride_draft_provider.dart';
 
-class PassengerGroupPickupScreen extends StatelessWidget {
+class PassengerGroupPickupScreen extends ConsumerStatefulWidget {
   const PassengerGroupPickupScreen({super.key});
+
+  @override
+  ConsumerState<PassengerGroupPickupScreen> createState() => _PassengerGroupPickupScreenState();
+}
+
+class _PassengerGroupPickupScreenState extends ConsumerState<PassengerGroupPickupScreen> {
+  final TextEditingController _pickupController = TextEditingController();
+
+  @override
+  void dispose() {
+    _pickupController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +75,7 @@ class PassengerGroupPickupScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Map Placeholder
+                    // Map Placeholder & Real Text Input
                     Container(
                       width: double.infinity,
                       height: 280,
@@ -79,30 +95,14 @@ class PassengerGroupPickupScreen extends StatelessWidget {
                             bottom: 24,
                             left: 24,
                             right: 24,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: AppColors.ink,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppColors.kekeGreen, width: 2),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.search, color: AppColors.paper, size: 20),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      'Yaba Active Zone...',
-                                      style: GoogleFonts.manrope(
-                                        color: AppColors.paper,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                  const Icon(Icons.my_location, color: AppColors.paper, size: 20),
-                                ],
-                              ),
+                            child: TWTextField(
+                              label: 'Pickup Location',
+                              controller: _pickupController,
+                              hintText: 'Enter your pickup location...',
+                              prefixIcon: const Icon(Icons.search, color: AppColors.paper, size: 20),
+                              onChanged: (val) {
+                                ref.read(groupRideDraftProvider.notifier).setPickup(val);
+                              },
                             ),
                           ),
                         ],
@@ -131,7 +131,13 @@ class PassengerGroupPickupScreen extends StatelessWidget {
                             'Tejuosho Market Gate'
                           ].map((spot) => Padding(
                             padding: const EdgeInsets.only(bottom: 10.0),
-                            child: _buildSpotItem(spot),
+                            child: GestureDetector(
+                              onTap: () {
+                                _pickupController.text = spot;
+                                ref.read(groupRideDraftProvider.notifier).setPickup(spot);
+                              },
+                              child: _buildSpotItem(spot),
+                            ),
                           )),
                         ],
                       ),
@@ -145,6 +151,12 @@ class PassengerGroupPickupScreen extends StatelessWidget {
                         child: TWButton(
                           label: 'Confirm Pickup Point',
                           onPressed: () {
+                            if (_pickupController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please enter a pickup location')),
+                              );
+                              return;
+                            }
                             Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) => const PassengerGroupDestinationScreen()),

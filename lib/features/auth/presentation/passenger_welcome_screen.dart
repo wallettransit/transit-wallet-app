@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/components/tw_button.dart';
-import '../../wallet/presentation/passenger_wallet_screen.dart';
+import '../../wallet/presentation/passenger_main_layout.dart';
 
 class PassengerWelcomeScreen extends StatelessWidget {
   const PassengerWelcomeScreen({super.key});
@@ -73,22 +73,15 @@ class PassengerWelcomeScreen extends StatelessWidget {
             // Bottom Action
             Container(
               padding: const EdgeInsets.all(24.0),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.ink,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
               ),
               child: TWButton(
                 label: 'Go to Dashboard',
                 onPressed: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const PassengerWalletScreen()),
+                    MaterialPageRoute(builder: (context) => const PassengerMainLayout()),
                     (route) => false,
                   );
                 },

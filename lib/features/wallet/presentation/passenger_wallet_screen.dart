@@ -14,6 +14,9 @@ import '../../group_ride/presentation/passenger/passenger_group_ride_home_screen
 import '../../../../core/components/tw_transfer_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/network_provider.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../data/wallet_repository.dart';
+import '../data/ride_repository.dart';
 import 'offline_payment_qr_screen.dart';
 
 class PassengerWalletScreen extends ConsumerWidget {
@@ -22,48 +25,25 @@ class PassengerWalletScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOffline = ref.watch(offlineStateProvider);
+    final currentUser = ref.watch(authRepositoryProvider).currentUser;
+    final walletBalanceAsync = ref.watch(walletBalanceProvider);
+    final recentRidesAsync = ref.watch(recentRidesProvider);
+    
+    final metadata = currentUser?.userMetadata ?? {};
+    final fullName = metadata['full_name'] as String? ?? 'Passenger';
+    
+    String initials = 'P';
+    if (fullName.isNotEmpty && fullName != 'Passenger') {
+      final parts = fullName.split(' ');
+      if (parts.length > 1 && parts[1].isNotEmpty) {
+        initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+      } else {
+        initials = fullName.substring(0, 1).toUpperCase();
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.ink,
-      extendBody: true,
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 24.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppColors.cardBackground.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: AppColors.borderStroke.withOpacity(0.5), width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildNavItem(Icons.home_filled, 'Home', true, () {}),
-                _buildNavItem(Icons.qr_code_scanner, 'Scan to Pay', false, () {
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PassengerQrScanScreen()));
-                }),
-                _buildNavItem(Icons.history, 'History', false, () {
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PassengerRideHistoryScreen()));
-                }),
-              ],
-            ),
-          ),
-        ),
-      ),
-          ),
-        ),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -104,7 +84,7 @@ class PassengerWalletScreen extends ConsumerWidget {
                                 shape: BoxShape.circle,
                               ),
                               alignment: Alignment.center,
-                              child: Text('AO', style: AppTypography.label.copyWith(color: AppColors.ink, fontWeight: FontWeight.bold)),
+                              child: Text(initials, style: AppTypography.label.copyWith(color: AppColors.ink, fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
@@ -113,7 +93,7 @@ class PassengerWalletScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Welcome back', style: AppTypography.bodySmall.copyWith(color: AppColors.muted)),
-                            Text('Amara Okafor', style: AppTypography.bodyMedium.copyWith(color: AppColors.paper, fontWeight: FontWeight.bold)),
+                            Text(fullName, style: AppTypography.bodyMedium.copyWith(color: AppColors.paper, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ],
@@ -172,7 +152,18 @@ class PassengerWalletScreen extends ConsumerWidget {
                             children: [
                               Text('₦', style: AppTypography.heading1.copyWith(color: AppColors.ink, fontSize: 24)),
                               const SizedBox(width: 4),
-                              Text('4,850', style: AppTypography.heading1.copyWith(color: AppColors.ink, fontSize: 36, fontWeight: FontWeight.w800)),
+                              walletBalanceAsync.when(
+                                data: (balance) => Text(
+                                  balance.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'),
+                                  style: AppTypography.heading1.copyWith(color: AppColors.ink, fontSize: 36, fontWeight: FontWeight.w800),
+                                ),
+                                loading: () => const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(color: AppColors.ink, strokeWidth: 3),
+                                ),
+                                error: (_, __) => Text('---', style: AppTypography.heading1.copyWith(color: AppColors.ink, fontSize: 36, fontWeight: FontWeight.w800)),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -241,6 +232,10 @@ class PassengerWalletScreen extends ConsumerWidget {
                             TWTransferBottomSheet.show(context);
                           }),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildFeatureCard('Budget', Icons.account_balance_wallet, AppColors.paper, () {}),
+                        ),
                       ],
                     ).animate().fade(delay: 150.ms).slideY(begin: 0.1, end: 0),
 
@@ -257,9 +252,33 @@ class PassengerWalletScreen extends ConsumerWidget {
                     
                     const SizedBox(height: 12),
                     
-                    _buildRideItem('Oshodi → CMS', 'Today, 09:37 AM', '₦350').animate().fade(delay: 300.ms).slideX(begin: 0.1, end: 0),
-                    _buildRideItem('CMS → Lekki', 'Yesterday, 06:15 PM', '₦500').animate().fade(delay: 400.ms).slideX(begin: 0.1, end: 0),
-                    _buildRideItem('Ikeja → Oshodi', '24 Jan, 08:20 AM', '₦700').animate().fade(delay: 500.ms).slideX(begin: 0.1, end: 0),
+                    recentRidesAsync.when(
+                      data: (rides) {
+                        if (rides.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Center(
+                              child: Text('No recent rides', style: AppTypography.bodyMedium.copyWith(color: AppColors.muted)),
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: rides.map((ride) => _buildRideItem(
+                            '${ride['start_location'] ?? 'Unknown'} → ${ride['end_location'] ?? 'Unknown'}',
+                            'Recently',
+                            '₦${ride['fare']}',
+                          )).toList(),
+                        ).animate().fade(delay: 300.ms).slideX(begin: 0.1, end: 0);
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
+                      ),
+                      error: (err, _) => Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text('Failed to load rides', style: AppTypography.bodySmall.copyWith(color: Colors.red)),
+                      ),
+                    ),
                     
                   ],
                 ),
@@ -379,53 +398,12 @@ class PassengerWalletScreen extends ConsumerWidget {
               child: Icon(icon, color: AppColors.ink, size: 20),
             ),
             const SizedBox(height: 8),
-            Text(label, style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold, color: AppColors.paper)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: () {
-        if (!isSelected) {
-          HapticFeedback.lightImpact();
-          onTap();
-        }
-      },
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(horizontal: isSelected ? 16 : 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.kekeGreen.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected ? AppColors.kekeGreen : AppColors.muted,
-            ).animate(target: isSelected ? 1 : 0).scale(
-              begin: const Offset(1, 1),
-              end: const Offset(1.1, 1.1),
-              duration: 200.ms,
+            Text(
+              label, 
+              style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold, color: AppColors.paper),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: GoogleFonts.manrope(
-                  color: AppColors.kekeGreen,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ).animate().fade(duration: 200.ms).slideX(begin: 0.2, end: 0),
-            ],
           ],
         ),
       ),

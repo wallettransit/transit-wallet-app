@@ -1,13 +1,23 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
-import '../../../core/components/tw_button.dart';
-import 'passenger_welcome_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/components/tw_button.dart';
+import '../providers/auth_provider.dart';
+import '../../profile/presentation/passenger_kyc_screen.dart';
 import '../../../core/components/tw_logo.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/app_typography.dart';
+import 'passenger_welcome_screen.dart';
 
 class PassengerOtpVerificationScreen extends StatefulWidget {
-  const PassengerOtpVerificationScreen({super.key});
+  final String phoneNumber;
+  
+  const PassengerOtpVerificationScreen({
+    super.key,
+    required this.phoneNumber,
+  });
 
   @override
   State<PassengerOtpVerificationScreen> createState() => _PassengerOtpVerificationScreenState();
@@ -17,9 +27,31 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
   final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
   bool _isLoading = false;
+  
+  Timer? _timer;
+  int _secondsRemaining = 30;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _secondsRemaining = 30;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsRemaining > 0) {
+        setState(() => _secondsRemaining--);
+      } else {
+        timer.cancel();
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _timer?.cancel();
     for (var c in _controllers) { c.dispose(); }
     for (var n in _focusNodes) { n.dispose(); }
     super.dispose();
@@ -31,14 +63,12 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
       setState(() => _isLoading = true);
       // Simulate network request
       await Future.delayed(const Duration(seconds: 1));
-      setState(() => _isLoading = false);
-      
       if (mounted) {
-        Navigator.push(
+        setState(() => _isLoading = false);
+        // Assuming success path for logic consistency
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const PassengerWelcomeScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const PassengerKycScreen()),
         );
       }
     } else {
@@ -138,7 +168,7 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
                     ).animate().fade(delay: 100.ms).slideY(begin: 0.2, end: 0),
                     const SizedBox(height: 8),
                     Text(
-                      'We sent a 4-digit verification code to +234 *** *** 8903. Please enter it below.',
+                      'We sent a 4-digit verification code to ${widget.phoneNumber}. Please enter it below.',
                       style: AppTypography.bodyMedium.copyWith(color: AppColors.muted),
                     ).animate().fade(delay: 200.ms).slideY(begin: 0.2, end: 0),
                     
@@ -161,9 +191,23 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
                             style: AppTypography.bodyMedium.copyWith(color: AppColors.muted),
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            "Resend in 0:30",
-                            style: AppTypography.bodyMedium.copyWith(color: AppColors.kekeGreen, fontWeight: FontWeight.bold),
+                          GestureDetector(
+                            onTap: _secondsRemaining == 0
+                                ? () {
+                                    // Handle resend logic here
+                                    _startTimer();
+                                    setState(() {});
+                                  }
+                                : null,
+                            child: Text(
+                              _secondsRemaining > 0 
+                                  ? "Resend in 0:${_secondsRemaining.toString().padLeft(2, '0')}"
+                                  : "Resend Code",
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: _secondsRemaining > 0 ? AppColors.kekeGreen.withOpacity(0.5) : AppColors.kekeGreen, 
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),

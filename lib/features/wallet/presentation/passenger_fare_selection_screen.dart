@@ -5,6 +5,8 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/components/tw_button.dart';
 import 'passenger_payment_confirmation_screen.dart';
 
+import 'passenger_main_layout.dart';
+
 class PassengerFareSelectionScreen extends StatefulWidget {
   const PassengerFareSelectionScreen({super.key});
 
@@ -36,7 +38,12 @@ class _PassengerFareSelectionScreenState extends State<PassengerFareSelectionScr
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.paper),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PassengerMainLayout()),
+            );
+          },
         ),
       ),
       body: SafeArea(
@@ -130,15 +137,8 @@ class _PassengerFareSelectionScreenState extends State<PassengerFareSelectionScr
             // Bottom Action
             Container(
               padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.ink,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
               ),
               child: TWButton(
                 label: 'Pay Now (₦${_fares[_selectedFareIndex]})',
