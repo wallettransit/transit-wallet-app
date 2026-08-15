@@ -9,6 +9,8 @@ import '../../../core/components/tw_logo.dart';
 import '../providers/auth_provider.dart';
 import 'passenger_otp_verification_screen.dart';
 import '../../../core/components/tw_snackbar.dart';
+import '../../../core/components/tw_phone_prefix.dart';
+import '../../../core/utils/tw_error_handler.dart';
 
 class PassengerRegistrationScreen extends ConsumerStatefulWidget {
   const PassengerRegistrationScreen({super.key});
@@ -47,7 +49,7 @@ class _PassengerRegistrationScreenState extends ConsumerState<PassengerRegistrat
       final authState = ref.read(authControllerProvider);
       if (authState.hasError) {
         if (mounted) {
-          TWSnackbar.showError(context, authState.error.toString());
+          TWErrorHandler.handle(context, authState.error);
         }
       } else {
         if (mounted) {
@@ -133,7 +135,7 @@ class _PassengerRegistrationScreenState extends ConsumerState<PassengerRegistrat
                         label: 'Phone Number',
                         hintText: '803 123 4567',
                         controller: _phoneController,
-                        prefixIcon: const Icon(Icons.phone, color: AppColors.muted),
+                        prefixIcon: const TWPhonePrefix(),
                         keyboardType: TextInputType.phone,
                         validator: (value) => value == null || value.isEmpty ? 'Phone number is required' : null,
                       ).animate().fade(delay: 400.ms).slideX(begin: 0.1, end: 0),

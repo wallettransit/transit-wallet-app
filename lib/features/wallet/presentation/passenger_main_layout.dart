@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import 'passenger_wallet_screen.dart';
 import 'passenger_qr_scan_screen.dart';
 import 'passenger_ride_history_screen.dart';
+import '../../profile/presentation/passenger_me_screen.dart';
 
 class PassengerMainLayout extends StatefulWidget {
   final int initialIndex;
@@ -23,6 +24,7 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
     const PassengerWalletScreen(),
     const PassengerQrScanScreen(),
     const PassengerRideHistoryScreen(),
+    const PassengerMeScreen(),
   ];
 
   @override
@@ -38,31 +40,33 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
       extendBody: true,
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 24.0),
+          padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 24.0),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
+            borderRadius: BorderRadius.circular(40),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
-                height: 64,
+                height: 72,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBackground.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: AppColors.borderStroke.withOpacity(0.5), width: 1),
+                  color: Colors.white.withOpacity(0.05), // True frosted glass effect
+                  borderRadius: BorderRadius.circular(40),
+                  border: Border.all(color: Colors.white.withOpacity(0.2)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 20,
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
                   ],
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildNavItem(0, Icons.home_filled, 'Home'),
-                    _buildNavItem(1, Icons.qr_code_scanner, 'Scan to Pay'),
-                    _buildNavItem(2, Icons.history, 'History'),
+                    _buildNavItem(0, Icons.home_filled, Icons.home_outlined, 'Home'),
+                    _buildNavItem(1, Icons.qr_code_scanner, Icons.qr_code_scanner, 'Scan'),
+                    _buildNavItem(2, Icons.history, Icons.history, 'History'),
+                    _buildNavItem(3, Icons.person, Icons.person_outline, 'Me'),
                   ],
                 ),
               ),
@@ -94,34 +98,32 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label) {
     bool isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
+        if (_currentIndex != index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        }
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(horizontal: isSelected ? 16 : 12, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: isSelected ? 20 : 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.kekeGreen.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
+          color: isSelected ? AppColors.kekeGreen.withOpacity(0.2) : Colors.transparent, // Light green pill
+          borderRadius: BorderRadius.circular(32),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              icon,
+              isSelected ? activeIcon : inactiveIcon,
+              color: isSelected ? AppColors.kekeGreen : Colors.white70,
               size: 24,
-              color: isSelected ? AppColors.kekeGreen : AppColors.muted,
-            ).animate(target: isSelected ? 1 : 0).scale(
-              begin: const Offset(1, 1),
-              end: const Offset(1.1, 1.1),
-              duration: 200.ms,
             ),
             if (isSelected) ...[
               const SizedBox(width: 8),
@@ -129,11 +131,11 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
                 label,
                 style: GoogleFonts.manrope(
                   color: AppColors.kekeGreen,
-                  fontSize: 13,
                   fontWeight: FontWeight.w700,
+                  fontSize: 14,
                 ),
-              ).animate().fade(duration: 200.ms).slideX(begin: 0.2, end: 0),
-            ],
+              ).animate().fade(duration: 200.ms).slideX(begin: -0.2, end: 0),
+            ]
           ],
         ),
       ),

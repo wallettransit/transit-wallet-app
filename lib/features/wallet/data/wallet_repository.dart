@@ -29,7 +29,8 @@ class WalletRepository {
           .maybeSingle();
 
       if (response != null && response['balance'] != null) {
-        return double.parse(response['balance'].toString());
+        // Balance is stored in Kobo, so divide by 100 to get Naira
+        return double.parse(response['balance'].toString()) / 100.0;
       }
       return 0.0;
     } catch (e) {

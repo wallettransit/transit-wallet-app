@@ -4,13 +4,22 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
+import '../../../../core/components/tw_snackbar.dart';
 import 'passenger_group_confirmed_screen.dart';
 import '../../providers/group_ride_draft_provider.dart';
 import '../../data/group_ride_repository.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../wallet/data/wallet_repository.dart';
 
 class PassengerGroupPaymentScreen extends ConsumerStatefulWidget {
-  const PassengerGroupPaymentScreen({super.key});
+  final String? groupIdToJoin;
+  final double? overrideFare;
+
+  const PassengerGroupPaymentScreen({
+    super.key,
+    this.groupIdToJoin,
+    this.overrideFare,
+  });
 
   @override
   ConsumerState<PassengerGroupPaymentScreen> createState() => _PassengerGroupPaymentScreenState();
@@ -22,6 +31,41 @@ class _PassengerGroupPaymentScreenState extends ConsumerState<PassengerGroupPaym
 
   @override
   Widget build(BuildContext context) {
+    final draft = ref.watch(groupRideDraftProvider);
+    final walletBalanceAsync = ref.watch(walletBalanceProvider);
+    
+    final fare = widget.overrideFare ?? draft.farePerPerson;
+    final fareStr = '₦${fare.toStringAsFixed(0)}';
+    
+    final List<Widget> paymentMethodWidgets = [
+      Text(
+        'Payment Method',
+        style: GoogleFonts.outfit(
+          color: AppColors.paper,
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      const SizedBox(height: 16),
+      walletBalanceAsync.when(
+        data: (balance) => _buildPaymentOption(
+          index: 0,
+          icon: Icons.account_balance_wallet,
+          title: 'TransitWallet Balance',
+          subtitle: 'Available: ₦${balance.toStringAsFixed(2)}',
+        ),
+        loading: () => const CircularProgressIndicator(color: AppColors.kekeGreen),
+        error: (_, __) => const Text('Error loading balance', style: TextStyle(color: Colors.red)),
+      ),
+      const SizedBox(height: 16),
+      _buildPaymentOption(
+        index: 1,
+        icon: Icons.credit_card,
+        title: 'Pay with Card',
+        subtitle: 'Add a new debit/credit card',
+      ),
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.cardBackground,
       body: SafeArea(
@@ -93,7 +137,7 @@ class _PassengerGroupPaymentScreenState extends ConsumerState<PassengerGroupPaym
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '₦384',
+                              fareStr,
                               style: GoogleFonts.outfit(
                                 color: AppColors.kekeGreen,
                                 fontSize: 40,
@@ -109,30 +153,7 @@ class _PassengerGroupPaymentScreenState extends ConsumerState<PassengerGroupPaym
                       // Payment Methods
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Payment Method',
-                            style: GoogleFonts.outfit(
-                              color: AppColors.paper,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildPaymentOption(
-                            index: 0,
-                            icon: Icons.account_balance_wallet,
-                            title: 'TransitWallet Balance',
-                            subtitle: 'Available: ₦1,850',
-                          ),
-                          const SizedBox(height: 16),
-                          _buildPaymentOption(
-                            index: 1,
-                            icon: Icons.credit_card,
-                            title: 'Pay with Card',
-                            subtitle: 'Add a new debit/credit card',
-                          ),
-                        ].animate(interval: 100.ms, delay: 200.ms).fade(duration: 400.ms).slideY(begin: 0.1),
+                        children: paymentMethodWidgets.animate(interval: 100.ms, delay: 200.ms).fade(duration: 400.ms).slideY(begin: 0.1),
                       ),
 
                       const SizedBox(height: 48),
@@ -140,35 +161,64 @@ class _PassengerGroupPaymentScreenState extends ConsumerState<PassengerGroupPaym
                       SizedBox(
                         width: double.infinity,
                         child: TWButton(
-                          label: _isLoading ? 'Processing...' : 'Confirm & Pay ₦384',
+                          label: _isLoading ? 'Processing...' : 'Confirm & Pay $fareStr',
                           icon: Icons.lock_outline,
                           onPressed: _isLoading ? () {} : () async {
+                            if (_selectedMethod == 1) {
+                              TWSnackbar.showError(context, 'Card payment gateway integration pending!');
+                              return;
+                            }
+                            
                             setState(() => _isLoading = true);
                             
-                            final draft = ref.read(groupRideDraftProvider);
                             final currentUser = ref.read(authRepositoryProvider).currentUser;
                             
                             if (currentUser != null) {
                               final repo = ref.read(groupRideRepositoryProvider);
-                              final res = await repo.createGroupRide(
-                                creatorId: currentUser.id,
-                                pickupLocation: draft.pickupLocation.isEmpty ? 'Yaba' : draft.pickupLocation,
-                                destination: draft.destination.isEmpty ? 'Lekki' : draft.destination,
-                                capacity: draft.capacity,
-                                farePerPerson: 384.0,
-                              );
+                              Map<String, dynamic> res;
+                              
+                              if (widget.groupIdToJoin != null) {
+                                res = await repo.joinGroupRide(
+                                  groupRideId: widget.groupIdToJoin!,
+                                  userId: currentUser.id,
+                                );
+                              } else {
+                                res = await repo.createGroupRide(
+                                  creatorId: currentUser.id,
+                                  pickupLocation: draft.pickupLocation.isEmpty ? 'Yaba' : draft.pickupLocation,
+                                  destination: draft.destination.isEmpty ? 'Lekki' : draft.destination,
+                                  capacity: draft.capacity,
+                                  farePerPerson: draft.farePerPerson,
+                                );
+                              }
                               
                               if (res['success'] == true) {
+                                final pickup = draft.pickupLocation.isEmpty ? 'Yaba' : draft.pickupLocation;
+                                final dest = draft.destination.isEmpty ? 'Lekki' : draft.destination;
+                                final name = currentUser.userMetadata?['full_name'] ?? 'Your';
+                                
+                                String bRef = '#TW-8492-GR';
+                                if (widget.groupIdToJoin != null) {
+                                  bRef = '#TW-${widget.groupIdToJoin!.substring(0,8).toUpperCase()}';
+                                } else if (res['data'] != null) {
+                                  bRef = '#TW-${res['data']['id'].toString().substring(0,8).toUpperCase()}';
+                                }
+                                
                                 ref.read(groupRideDraftProvider.notifier).reset();
                                 if (mounted) {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const PassengerGroupConfirmedScreen()),
+                                    MaterialPageRoute(builder: (context) => PassengerGroupConfirmedScreen(
+                                      pickupLocation: pickup,
+                                      destination: dest,
+                                      userName: name,
+                                      bookingRef: bRef,
+                                    )),
                                   );
                                 }
                               } else {
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${res['message']}')));
+                                  TWSnackbar.showError(context, 'Error: ${res['message']}');
                                 }
                               }
                             }

@@ -4,9 +4,21 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
 import 'passenger_group_chat_screen.dart';
+import '../../../wallet/presentation/passenger_main_layout.dart';
 
 class PassengerGroupConfirmedScreen extends StatelessWidget {
-  const PassengerGroupConfirmedScreen({super.key});
+  final String pickupLocation;
+  final String destination;
+  final String userName;
+  final String bookingRef;
+
+  const PassengerGroupConfirmedScreen({
+    super.key,
+    required this.pickupLocation,
+    required this.destination,
+    required this.userName,
+    required this.bookingRef,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +35,12 @@ class PassengerGroupConfirmedScreen extends StatelessWidget {
                   _buildIconButton(
                     icon: Icons.close,
                     onTap: () {
-                      // Pop all the way back to dashboard
-                      Navigator.popUntil(context, (route) => route.isFirst);
+                      // Return to dashboard safely
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PassengerMainLayout()),
+                        (route) => false,
+                      );
                     },
                   ),
                 ],
@@ -70,17 +86,17 @@ class PassengerGroupConfirmedScreen extends StatelessWidget {
                   
                   const SizedBox(height: 12),
                   
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                    child: Text(
-                      'You are officially part of Amara\'s Group Ride. Your seat is secured.',
-                      style: GoogleFonts.manrope(
-                        color: AppColors.muted,
-                        fontSize: 16,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                      child: Text(
+                        'Your Group Ride is created! You are officially part of this ride. Your seat is secured.',
+                        style: GoogleFonts.manrope(
+                          color: AppColors.muted,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ).animate().fade(duration: 400.ms, delay: 400.ms).slideY(begin: 0.2),
+                    ).animate().fade(duration: 400.ms, delay: 400.ms).slideY(begin: 0.2),
 
                   const SizedBox(height: 48),
 
@@ -96,11 +112,11 @@ class PassengerGroupConfirmedScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          _buildDetailRow('Booking Ref', '#TW-8492-GR'),
+                          _buildDetailRow('Booking Ref', bookingRef),
                           const SizedBox(height: 16),
                           const Divider(color: AppColors.borderStroke, height: 1),
                           const SizedBox(height: 16),
-                          _buildDetailRow('Route', 'Yaba → Lekki Phase 1'),
+                          _buildDetailRow('Route', '$pickupLocation → $destination'),
                           const SizedBox(height: 16),
                           const Divider(color: AppColors.borderStroke, height: 1),
                           const SizedBox(height: 16),
@@ -123,8 +139,12 @@ class PassengerGroupConfirmedScreen extends StatelessWidget {
                     child: TWButton(
                       label: 'Track Group Status',
                       onPressed: () {
-                        // Navigate back to home for now
-                        Navigator.popUntil(context, (route) => route.isFirst);
+                        // Return to dashboard safely
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => const PassengerMainLayout()),
+                          (route) => false,
+                        );
                       },
                     ),
                   ),
@@ -172,6 +192,7 @@ class PassengerGroupConfirmedScreen extends StatelessWidget {
   Widget _buildDetailRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -180,12 +201,16 @@ class PassengerGroupConfirmedScreen extends StatelessWidget {
             fontSize: 14,
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.outfit(
-            color: AppColors.paper,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: GoogleFonts.outfit(
+              color: AppColors.paper,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],

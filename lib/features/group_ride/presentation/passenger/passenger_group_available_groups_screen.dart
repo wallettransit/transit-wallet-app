@@ -6,7 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_profile_avatar.dart';
 import '../../../../core/components/tw_button.dart';
 import '../../providers/group_ride_draft_provider.dart';
-import 'passenger_group_create_screen.dart';
+import 'passenger_group_route_setup_screen.dart';
 import 'passenger_group_details_screen.dart';
 import '../../data/group_ride_repository.dart';
 
@@ -16,6 +16,7 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final availableGroupsAsync = ref.watch(availableGroupRidesProvider);
+    final draft = ref.watch(groupRideDraftProvider);
 
     return Scaffold(
       backgroundColor: AppColors.cardBackground,
@@ -51,7 +52,9 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Commutes matching Yaba Terminal to Lekki Phase 1',
+                    draft.pickupLocation.isEmpty && draft.destination.isEmpty
+                        ? 'Commutes matching your route'
+                        : 'Commutes matching ${draft.pickupLocation.isNotEmpty ? draft.pickupLocation : "your route"} to ${draft.destination.isNotEmpty ? draft.destination : "your destination"}',
                     style: GoogleFonts.manrope(
                       color: AppColors.muted,
                       fontSize: 14,
@@ -63,46 +66,72 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
             ).animate().fade(duration: 300.ms).slideY(begin: -0.1),
 
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Groups Stack
-                    Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: availableGroupsAsync.when(
-                        data: (groups) {
-                          if (groups.isEmpty) {
-                            return _buildPremiumEmptyState(context);
-                          }
-                          return Column(
-                            children: groups.map((group) {
-                              final creatorName = group['users']?['full_name'] ?? 'Passenger';
-                              final capacity = group['capacity'] ?? 4;
-                              final joinedCount = group['joined_count'] ?? 1;
-                              final seatsLeft = capacity - joinedCount;
-                              final fare = group['fare_per_person'] ?? 0;
-                              
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: _buildGroupCard(
-                                  context,
-                                  matchPercent: '95%', // Mock match for now
-                                  creatorInitials: creatorName.substring(0, 1).toUpperCase(),
-                                  creatorName: creatorName,
-                                  groupType: '${capacity} Seat Group',
-                                  seatsAvailable: '$seatsLeft seats left',
-                                  departureTime: 'Departs Soon',
-                                  originalPrice: '₦${(fare * 1.5).toStringAsFixed(0)}',
-                                  groupPrice: '₦${fare.toStringAsFixed(0)}',
-                                ),
-                              );
-                            }).toList().animate(interval: 100.ms).fade(duration: 400.ms).slideY(begin: 0.1),
-                          );
-                        },
-                        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
-                        error: (err, _) => Text('Error loading groups: $err', style: const TextStyle(color: Colors.red)),
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification scrollInfo) {
+                  if (scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
+                    ref.read(availableGroupRidesProvider.notifier).loadMore();
+                  }
+                  return false;
+                },
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Groups Stack
+                      Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: availableGroupsAsync.when(
+                          data: (groups) {
+                            if (groups.isEmpty) {
+                              return _buildPremiumEmptyState(context);
+                            }
+                            return Column(
+                              children: [
+                                ...groups.map((group) {
+                                  final creatorName = group['users']?['full_name'] ?? 'Passenger';
+                                  final groupName = group['group_name'] ?? '$creatorName\'s Group';
+                                  final creatorId = group['creator_id'] ?? '';
+                                  final capacity = group['capacity'] ?? 4;
+                                  final joinedCount = group['joined_count'] ?? 1;
+                                  final seatsLeft = capacity - joinedCount;
+                                  final fare = group['fare_per_person'] ?? 0;
+                                  
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: _buildGroupCard(
+                                      context,
+                                      groupId: group['id'],
+                                      matchPercent: '95%', // Mock match for now
+                                      creatorId: creatorId,
+                                      groupName: groupName,
+                                      creatorInitials: creatorName.substring(0, 1).toUpperCase(),
+                                      creatorName: creatorName,
+                                      groupType: '${capacity} Seat Group',
+                                      seatsAvailable: '$seatsLeft seats left',
+                                      departureTime: 'Departs Soon',
+                                      originalPrice: '₦${(fare * 1.5).toStringAsFixed(0)}',
+                                      groupPrice: '₦${fare.toStringAsFixed(0)}',
+                                      route: '${group['pickup_location'] ?? 'Yaba'} → ${group['destination'] ?? 'Lekki'}',
+                                      baseFare: (fare as num).toDouble(),
+                                    ),
+                                  );
+                                }).toList().animate(interval: 100.ms).fade(duration: 400.ms).slideY(begin: 0.1),
+                                if (availableGroupsAsync.isLoading)
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 20),
+                                    child: Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
+                                  ),
+                              ],
+                            );
+                          },
+                          loading: () => const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: CircularProgressIndicator(color: AppColors.kekeGreen),
+                            ),
+                          ),
+                          error: (err, _) => _buildErrorState(context, err.toString(), ref),
+                        ),
                       ),
-                    ),
 
                     // Footer Note (only shown if not empty, handled inside empty state otherwise)
                     availableGroupsAsync.maybeWhen(
@@ -114,7 +143,7 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
                                 onTap: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const PassengerGroupCreateScreen()),
+                                    MaterialPageRoute(builder: (context) => const PassengerGroupRouteSetupScreen()),
                                   );
                                 },
                                 child: Text(
@@ -135,6 +164,7 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              ),
             ),
           ],
         ),
@@ -154,6 +184,48 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
           border: Border.all(color: AppColors.borderStroke),
         ),
         child: Icon(icon, size: 20, color: AppColors.paper),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String error, WidgetRef ref) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.redAccent, size: 60),
+          const SizedBox(height: 16),
+          Text(
+            'Connection Error',
+            style: GoogleFonts.outfit(
+              color: AppColors.paper,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Could not load available group rides.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.manrope(
+              color: AppColors.muted,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              ref.invalidate(availableGroupRidesProvider);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.kekeGreen,
+              foregroundColor: AppColors.ink,
+            ),
+            child: const Text('Try Again'),
+          ),
+        ],
       ),
     );
   }
@@ -232,7 +304,19 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
             ),
           ).animate().fade(delay: 300.ms).slideY(begin: 0.2),
           
-          const SizedBox(height: 40),
+          const SizedBox(height: 12),
+          
+          Text(
+            'Be the trendsetter. You pay less when others join!',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.manrope(
+              color: AppColors.kekeGreen,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ).animate().fade(delay: 350.ms).slideY(begin: 0.2),
+          
+          const SizedBox(height: 32),
           
           SizedBox(
             width: double.infinity,
@@ -249,11 +333,11 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  // The user is already in the flow, they can just proceed to Date/Time
-                  // Because they want to create one instead of joining.
+                  // The user is starting the flow to create a group
+                  // We send them to the pickup screen to define their route
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const PassengerGroupCreateScreen()),
+                    MaterialPageRoute(builder: (context) => const PassengerGroupRouteSetupScreen()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -289,6 +373,9 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
 
   Widget _buildGroupCard(
     BuildContext context, {
+    required String groupId,
+    required String creatorId,
+    required String groupName,
     required String matchPercent,
     required String creatorInitials,
     required String creatorName,
@@ -297,12 +384,39 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
     required String departureTime,
     required String originalPrice,
     required String groupPrice,
+    required String route,
+    required double baseFare,
   }) {
+    // Determine Match Quality based on percentage string (e.g. '95%')
+    final matchValue = int.tryParse(matchPercent.replaceAll('%', '')) ?? 0;
+    Color badgeBgColor = AppColors.kekeGreen.withOpacity(0.15);
+    Color badgeTextColor = AppColors.kekeGreen;
+    String badgeText = '$matchPercent High Match';
+    
+    if (matchValue < 70) {
+      badgeBgColor = AppColors.errorRed.withOpacity(0.15);
+      badgeTextColor = AppColors.errorRed;
+      badgeText = '$matchPercent Low Match';
+    } else if (matchValue < 90) {
+      badgeBgColor = AppColors.danfoYellow.withOpacity(0.15);
+      badgeTextColor = AppColors.danfoYellow;
+      badgeText = '$matchPercent Med Match';
+    }
+
+    final bool isLastSeat = seatsAvailable.contains('1 seat');
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const PassengerGroupDetailsScreen()),
+          MaterialPageRoute(builder: (context) => PassengerGroupDetailsScreen(
+            groupId: groupId,
+            creatorId: creatorId,
+            groupName: groupName,
+            creatorName: creatorName,
+            route: route,
+            baseFare: baseFare,
+          )),
         );
       },
       child: Container(
@@ -332,7 +446,7 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '$creatorName\'s Group',
+                          groupName,
                           style: GoogleFonts.outfit(
                             color: AppColors.paper,
                             fontSize: 14,
@@ -353,13 +467,13 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.kekeGreen.withOpacity(0.1),
+                    color: badgeBgColor,
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
-                    '$matchPercent Route Match',
+                    badgeText,
                     style: GoogleFonts.manrope(
-                      color: AppColors.kekeGreen,
+                      color: badgeTextColor,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -377,15 +491,16 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.group_outlined, size: 14, color: AppColors.muted),
+                        Icon(Icons.group_outlined, size: 14, color: isLastSeat ? AppColors.danfoYellow : AppColors.muted),
                         const SizedBox(width: 4),
                         Text(
                           seatsAvailable,
                           style: GoogleFonts.manrope(
-                            color: AppColors.muted,
+                            color: isLastSeat ? AppColors.danfoYellow : AppColors.muted,
                             fontSize: 12,
+                            fontWeight: isLastSeat ? FontWeight.bold : FontWeight.normal,
                           ),
-                        ),
+                        ).animate(target: isLastSeat ? 1 : 0).scaleXY(begin: 1.0, end: 1.1, duration: 600.ms).then().scaleXY(begin: 1.1, end: 1.0, duration: 600.ms),
                       ],
                     ),
                     const SizedBox(width: 16),
@@ -407,20 +522,32 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      originalPrice,
-                      style: GoogleFonts.manrope(
-                        color: AppColors.muted,
-                        fontSize: 11,
-                        decoration: TextDecoration.lineThrough,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          'Save ₦${((baseFare * 1.5) - baseFare).toStringAsFixed(0)}! ',
+                          style: GoogleFonts.manrope(
+                            color: AppColors.danfoYellow,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          originalPrice,
+                          style: GoogleFonts.manrope(
+                            color: AppColors.muted,
+                            fontSize: 11,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       groupPrice,
                       style: GoogleFonts.outfit(
                         color: AppColors.kekeGreen,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ],

@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Location Permissions for OyaPay -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>OyaPay needs your location to set accurate pickup points for your rides.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>OyaPay needs your location to set accurate pickup points for your rides.</string>
 </dict>
 </plist>

@@ -3,13 +3,26 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../wallet/data/wallet_repository.dart';
 import 'passenger_group_payment_screen.dart';
 
-class PassengerGroupFareReviewScreen extends StatelessWidget {
-  const PassengerGroupFareReviewScreen({super.key});
+class PassengerGroupFareReviewScreen extends ConsumerWidget {
+  final String? groupId;
+  final double baseFare;
+
+  const PassengerGroupFareReviewScreen({
+    super.key,
+    this.groupId,
+    required this.baseFare,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final walletBalanceAsync = ref.watch(walletBalanceProvider);
+    final subsidy = baseFare * 0.20;
+    final finalAmount = baseFare - subsidy;
+
     return Scaffold(
       backgroundColor: AppColors.cardBackground,
       body: SafeArea(
@@ -111,13 +124,13 @@ class PassengerGroupFareReviewScreen extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            _buildFareRow('Group Rate Fare', '₦480', AppColors.muted, AppColors.paper),
+                            _buildFareRow('Group Rate Fare', '₦${baseFare.toStringAsFixed(0)}', AppColors.muted, AppColors.paper),
                             const SizedBox(height: 12),
-                            _buildFareRow('TransitWallet Subsidy', '-₦96', AppColors.muted, AppColors.kekeGreen),
+                            _buildFareRow('TransitWallet Subsidy', '-₦${subsidy.toStringAsFixed(0)}', AppColors.muted, AppColors.kekeGreen),
                             const SizedBox(height: 16),
                             const Divider(color: AppColors.borderStroke, height: 1),
                             const SizedBox(height: 16),
-                            _buildFareRow('Final Amount', '₦384', AppColors.paper, AppColors.kekeGreen, isTotal: true),
+                            _buildFareRow('Final Amount', '₦${finalAmount.toStringAsFixed(0)}', AppColors.paper, AppColors.kekeGreen, isTotal: true),
                           ],
                         ),
                       ).animate().fade(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1),
@@ -148,13 +161,21 @@ class PassengerGroupFareReviewScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            Text(
-                              '₦1,850',
-                              style: GoogleFonts.outfit(
-                                color: AppColors.paper,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
+                            walletBalanceAsync.when(
+                              data: (balance) => Text(
+                                '₦${balance.toStringAsFixed(2)}',
+                                style: GoogleFonts.outfit(
+                                  color: AppColors.paper,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
+                              loading: () => const SizedBox(
+                                width: 20, 
+                                height: 20, 
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.kekeGreen)
+                              ),
+                              error: (_, __) => const Text('Error', style: TextStyle(color: Colors.red)),
                             ),
                           ],
                         ),
@@ -170,7 +191,10 @@ class PassengerGroupFareReviewScreen extends StatelessWidget {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const PassengerGroupPaymentScreen()),
+                              MaterialPageRoute(builder: (context) => PassengerGroupPaymentScreen(
+                                groupIdToJoin: groupId,
+                                overrideFare: finalAmount,
+                              )),
                             );
                           },
                         ),

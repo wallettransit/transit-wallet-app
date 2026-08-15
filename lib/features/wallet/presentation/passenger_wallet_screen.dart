@@ -17,7 +17,10 @@ import '../../../../core/providers/network_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/wallet_repository.dart';
 import '../data/ride_repository.dart';
+import '../../budget/presentation/passenger_budget_screen.dart';
+import '../../../core/components/tw_coming_soon_screen.dart';
 import 'offline_payment_qr_screen.dart';
+import '../../../../core/components/tw_updates_carousel.dart';
 
 class PassengerWalletScreen extends ConsumerWidget {
   const PassengerWalletScreen({super.key});
@@ -212,32 +215,63 @@ class PassengerWalletScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                     
                     // Quick Actions
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildFeatureCard('Group', Icons.people, AppColors.danfoYellow, () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const PassengerGroupRideHomeScreen()),
-                            );
-                          }),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildFeatureCard('Book', Icons.menu_book, AppColors.kekeGreen, () {}),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildFeatureCard('Transfer', Icons.send, AppColors.paper, () {
-                            TWTransferBottomSheet.show(context);
-                          }),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildFeatureCard('Budget', Icons.account_balance_wallet, AppColors.paper, () {}),
-                        ),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.ink,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildFeatureCard('Group', Icons.people, AppColors.danfoYellow, () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const PassengerGroupRideHomeScreen()),
+                              );
+                            }),
+                          ),
+                          Expanded(
+                            child: _buildFeatureCard('Book', Icons.menu_book, AppColors.kekeGreen, () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const TWComingSoonScreen(
+                                    title: 'Book a Ride',
+                                    featureName: 'ride booking',
+                                    icon: Icons.menu_book,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                          Expanded(
+                            child: _buildFeatureCard('Transfer', Icons.send, AppColors.paper, () {
+                              TWTransferBottomSheet.show(context);
+                            }),
+                          ),
+                          Expanded(
+                            child: _buildFeatureCard('Budget', Icons.account_balance_wallet, AppColors.paper, () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const PassengerBudgetScreen()),
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
                     ).animate().fade(delay: 150.ms).slideY(begin: 0.1, end: 0),
+
+                    const SizedBox(height: 32),
+                    
+                    TWUpdatesCarousel(promos: PromoData.passengerPromos).animate().fade(delay: 180.ms).slideX(begin: 0.1, end: 0),
 
                     const SizedBox(height: 24),
                     
@@ -296,17 +330,17 @@ class PassengerWalletScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.ink,
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.ink.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: color),
+            Icon(icon, size: 18, color: AppColors.paper),
             const SizedBox(width: 8),
-            Text(label, style: AppTypography.label.copyWith(color: color, fontWeight: FontWeight.bold)),
+            Text(label, style: AppTypography.label.copyWith(color: AppColors.paper, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -377,35 +411,28 @@ class PassengerWalletScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFeatureCard(String label, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildFeatureCard(String label, IconData icon, Color iconColor, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: AppColors.ink, size: 20),
+      child: Column(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppColors.highlightBackground,
+              borderRadius: BorderRadius.circular(18),
             ),
-            const SizedBox(height: 8),
-            Text(
-              label, 
-              style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold, color: AppColors.paper),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+            child: Icon(icon, color: iconColor == AppColors.paper ? AppColors.paper : iconColor, size: 24),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            label, 
+            style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600, color: AppColors.paper),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

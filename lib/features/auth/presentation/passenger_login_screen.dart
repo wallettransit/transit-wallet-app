@@ -13,6 +13,7 @@ import '../../wallet/presentation/passenger_main_layout.dart';
 import '../../profile/presentation/passenger_kyc_screen.dart';
 import '../data/auth_repository.dart';
 import '../../../core/components/tw_snackbar.dart';
+import '../../../core/utils/tw_error_handler.dart';
 
 class PassengerLoginScreen extends ConsumerStatefulWidget {
   const PassengerLoginScreen({super.key});
@@ -42,9 +43,9 @@ class _PassengerLoginScreenState extends ConsumerState<PassengerLoginScreen> {
       );
       
       final authState = ref.read(authControllerProvider);
-      if (authState.hasError) {
+      if (!authState.isLoading && authState.hasError) {
         if (mounted) {
-          TWSnackbar.showError(context, authState.error.toString());
+          TWErrorHandler.handle(context, authState.error);
         }
       } else {
         // Fetch user profile to check KYC tier
@@ -53,14 +54,16 @@ class _PassengerLoginScreenState extends ConsumerState<PassengerLoginScreen> {
           final profile = await ref.read(authRepositoryProvider).getUserProfile(user.id);
           if (mounted) {
             if (profile != null && profile['kyc_tier'] == 'tier_0') {
-              Navigator.pushReplacement(
+              Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const PassengerKycScreen()),
+                (route) => false,
               );
             } else {
-              Navigator.pushReplacement(
+              Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const PassengerMainLayout()),
+                (route) => false,
               );
             }
           }

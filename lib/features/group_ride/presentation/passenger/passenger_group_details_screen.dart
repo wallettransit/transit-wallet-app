@@ -5,13 +5,42 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
 import '../../../../core/components/tw_profile_avatar.dart';
 import '../../../../core/components/tw_live_tracking_map.dart';
+import '../../../../core/components/tw_snackbar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../../data/group_ride_repository.dart';
 import 'passenger_group_fare_review_screen.dart';
 
-class PassengerGroupDetailsScreen extends StatelessWidget {
-  const PassengerGroupDetailsScreen({super.key});
+class PassengerGroupDetailsScreen extends ConsumerStatefulWidget {
+  final String groupId;
+  final String creatorId;
+  final String groupName;
+  final String creatorName;
+  final String route;
+  final double baseFare;
+
+  const PassengerGroupDetailsScreen({
+    super.key,
+    required this.groupId,
+    required this.creatorId,
+    required this.groupName,
+    required this.creatorName,
+    required this.route,
+    required this.baseFare,
+  });
+
+  @override
+  ConsumerState<PassengerGroupDetailsScreen> createState() => _PassengerGroupDetailsScreenState();
+}
+
+class _PassengerGroupDetailsScreenState extends ConsumerState<PassengerGroupDetailsScreen> {
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = ref.watch(authRepositoryProvider).currentUser;
+    final isCreator = currentUser?.id == widget.creatorId;
+
     return Scaffold(
       backgroundColor: AppColors.cardBackground,
       body: SafeArea(
@@ -31,7 +60,7 @@ class PassengerGroupDetailsScreen extends StatelessWidget {
                         onTap: () => Navigator.pop(context),
                       ),
                       Text(
-                        'Amara\'s Ride Group',
+                        widget.groupName,
                         style: GoogleFonts.outfit(
                           color: AppColors.paper,
                           fontSize: 20,
@@ -46,7 +75,7 @@ class PassengerGroupDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Route: Yaba Terminal → Lekki Phase 1',
+                    'Route: ${widget.route}',
                     style: GoogleFonts.manrope(
                       color: AppColors.muted,
                       fontSize: 14,
@@ -73,37 +102,73 @@ class PassengerGroupDetailsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Joined Commuters (4/14)',
-                            style: GoogleFonts.outfit(
-                              color: AppColors.paper,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              const TWProfileAvatar(initials: 'AM', radius: 20),
-                              const SizedBox(width: 8),
-                              const TWProfileAvatar(initials: 'JD', radius: 20),
-                              const SizedBox(width: 8),
-                              const TWProfileAvatar(initials: 'SO', radius: 20),
-                              const SizedBox(width: 8),
-                              const TWProfileAvatar(initials: 'EB', radius: 20),
-                              const SizedBox(width: 8),
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.borderStroke),
-                                ),
-                                child: const Center(
-                                  child: Icon(Icons.add, size: 14, color: AppColors.muted),
-                                ),
-                              ),
-                            ],
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final membersAsync = ref.watch(groupRideMembersProvider(widget.groupId));
+                              return membersAsync.when(
+                                data: (members) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Joined Commuters (${members.length})',
+                                        style: GoogleFonts.outfit(
+                                          color: AppColors.paper,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          ...members.take(4).map((m) {
+                                            final fullName = m['users']?['full_name'] as String? ?? 'User';
+                                            final initials = fullName.isNotEmpty ? fullName.trim().split(RegExp(' +')).map((s) => s[0]).take(2).join().toUpperCase() : 'U';
+                                            return Padding(
+                                              padding: const EdgeInsets.only(right: 8.0),
+                                              child: TWProfileAvatar(initials: initials, radius: 20),
+                                            );
+                                          }),
+                                          if (members.length > 4)
+                                            Container(
+                                              width: 40,
+                                              height: 40,
+                                              margin: const EdgeInsets.only(right: 8.0),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.highlightBackground,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  '+${members.length - 4}',
+                                                  style: GoogleFonts.manrope(
+                                                    color: AppColors.muted,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: AppColors.borderStroke),
+                                            ),
+                                            child: const Center(
+                                              child: Icon(Icons.add, size: 14, color: AppColors.muted),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                },
+                                loading: () => const CircularProgressIndicator(color: AppColors.kekeGreen),
+                                error: (e, st) => Text('Error loading commuters', style: GoogleFonts.manrope(color: Colors.red)),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -133,15 +198,15 @@ class PassengerGroupDetailsScreen extends StatelessWidget {
                             ),
                             child: Column(
                               children: [
-                                _buildFareRow('Standard Private Fare', '₦1,200', AppColors.muted, AppColors.paper),
+                                _buildFareRow('Standard Private Fare', '₦${(widget.baseFare * 2.5).toStringAsFixed(0)}', AppColors.muted, AppColors.paper),
                                 const SizedBox(height: 12),
-                                _buildFareRow('Group Discount (60%)', '-₦720', AppColors.muted, AppColors.errorRed),
+                                _buildFareRow('Group Discount (60%)', '-₦${(widget.baseFare * 1.5).toStringAsFixed(0)}', AppColors.muted, AppColors.errorRed),
                                 const SizedBox(height: 12),
                                 const Divider(color: AppColors.borderStroke, height: 1),
                                 const SizedBox(height: 12),
                                 _buildFareRow(
                                   'Your Price to Pay',
-                                  '₦480',
+                                  '₦${widget.baseFare.toStringAsFixed(0)}',
                                   AppColors.paper,
                                   AppColors.kekeGreen,
                                   isTotal: true,
@@ -156,19 +221,42 @@ class PassengerGroupDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: TWButton(
-                          label: 'Join Group Ride',
-                          icon: Icons.arrow_forward,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const PassengerGroupFareReviewScreen()),
-                            );
-                          },
-                        ),
-                      ),
+                      child: isCreator 
+                        ? Row(
+                            children: [
+                              Expanded(
+                                child: TWButton(
+                                  label: 'Delete',
+                                  icon: Icons.delete_outline,
+                                  onPressed: _isLoading ? () {} : () => _showDeleteDialog(context),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TWButton(
+                                  label: 'Rename',
+                                  icon: Icons.edit_outlined,
+                                  onPressed: _isLoading ? () {} : () => _showRenameDialog(context),
+                                ),
+                              ),
+                            ],
+                          )
+                        : SizedBox(
+                            width: double.infinity,
+                            child: TWButton(
+                              label: 'Join Group Ride',
+                              icon: Icons.arrow_forward,
+                              onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => PassengerGroupFareReviewScreen(
+                                      groupId: widget.groupId,
+                                      baseFare: widget.baseFare,
+                                    )),
+                                  );
+                              },
+                            ),
+                          ),
                     ).animate().fade(duration: 400.ms, delay: 400.ms),
                     const SizedBox(height: 24),
                   ],
@@ -214,6 +302,89 @@ class PassengerGroupDetailsScreen extends StatelessWidget {
               : GoogleFonts.manrope(color: amountColor, fontSize: 14),
         ),
       ],
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.ink,
+        title: Text('Delete Group', style: GoogleFonts.outfit(color: AppColors.paper)),
+        content: Text('Are you sure you want to delete this group ride?', style: GoogleFonts.manrope(color: AppColors.muted)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.muted)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              setState(() => _isLoading = true);
+              final repo = ref.read(groupRideRepositoryProvider);
+              final res = await repo.deleteGroupRide(widget.groupId);
+              if (mounted) {
+                setState(() => _isLoading = false);
+                if (res['success'] == true) {
+                  ref.refresh(availableGroupRidesProvider);
+                  Navigator.pop(context);
+                } else {
+                  TWSnackbar.showError(context, 'Error: ${res['message']}');
+                }
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: AppColors.errorRed)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRenameDialog(BuildContext context) {
+    final controller = TextEditingController(text: widget.groupName);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.ink,
+        title: Text('Rename Group', style: GoogleFonts.outfit(color: AppColors.paper)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: AppColors.paper),
+          decoration: const InputDecoration(
+            hintText: 'New group name',
+            hintStyle: TextStyle(color: AppColors.muted),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.borderStroke)),
+            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.kekeGreen)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.muted)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isEmpty) return;
+              Navigator.pop(ctx);
+              
+              setState(() => _isLoading = true);
+              final repo = ref.read(groupRideRepositoryProvider);
+              final res = await repo.renameGroupRide(widget.groupId, newName);
+              if (mounted) {
+                setState(() => _isLoading = false);
+                if (res['success'] == true) {
+                  ref.refresh(availableGroupRidesProvider);
+                  Navigator.pop(context);
+                } else {
+                  TWSnackbar.showError(context, 'Error: ${res['message']}');
+                }
+              }
+            },
+            child: const Text('Save', style: TextStyle(color: AppColors.kekeGreen)),
+          ),
+        ],
+      ),
     );
   }
 }

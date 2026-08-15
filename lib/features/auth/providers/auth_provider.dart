@@ -18,13 +18,22 @@ final authStateChangesProvider = StreamProvider<AuthState>((ref) {
 
 final authControllerProvider = StateNotifierProvider<AuthController, AsyncValue<void>>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
-  return AuthController(authRepository);
+  return AuthController(authRepository, ref);
+});
+
+final isAppLockedProvider = StateProvider<bool>((ref) => false);
+
+final userProfileProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+  final authRepo = ref.watch(authRepositoryProvider);
+  final user = authRepo.currentUser;
+  if (user == null) return null;
+  return authRepo.getUserProfile(user.id);
 });
 
 class AuthController extends StateNotifier<AsyncValue<void>> {
   final AuthRepository _authRepository;
 
-  AuthController(this._authRepository) : super(const AsyncValue.data(null));
+  AuthController(this._authRepository, Ref ref) : super(const AsyncValue.data(null));
 
   Future<void> signUp({
     required String email,
@@ -44,8 +53,6 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     } on AuthException catch (e, st) {
       if (e.message.toLowerCase().contains('already registered')) {
         state = AsyncValue.error("This email is already registered. Please log in instead.", st);
-      } else if (e.message.contains('Database error saving new user') || e.message.contains('unexpected_failure')) {
-        state = AsyncValue.error("This phone number is already linked to an existing account. Please log in or use a different number.", st);
       } else {
         // Try to parse JSON error message if it exists
         String cleanMessage = e.message;

@@ -9,9 +9,19 @@ import 'package:flutter/services.dart';
 import 'core/providers/network_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/services/session_manager.dart';
+import 'features/auth/providers/auth_provider.dart';
+import 'features/wallet/presentation/passenger_main_layout.dart';
+import 'features/auth/presentation/app_lock_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Failed to load .env file: $e");
+  }
 
   try {
     await Supabase.initialize(
@@ -54,7 +64,7 @@ class TransitWalletApp extends StatelessWidget {
           },
         ),
       ),
-      home: const WelcomeScreen(),
+      home: const _AuthWrapper(),
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
         final mediaQueryData = MediaQuery.of(context);
@@ -62,10 +72,70 @@ class TransitWalletApp extends StatelessWidget {
           data: mediaQueryData.copyWith(
             textScaler: TextScaler.noScaling,
           ),
-          child: _OfflineBannerWrapper(child: child!),
+          child: SessionManager(
+            child: Stack(
+              children: [
+                _OfflineBannerWrapper(child: child!),
+                const _LockScreenOverlay(),
+              ],
+            ),
+          ),
         );
       },
     );
+  }
+}
+
+class _LockScreenOverlay extends ConsumerWidget {
+  const _LockScreenOverlay();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Only show lock screen if app is locked AND user is actually authenticated
+    final isLocked = ref.watch(isAppLockedProvider);
+    final authState = ref.watch(authStateChangesProvider).value;
+    final isAuthenticated = authState?.session != null;
+
+    if (isLocked && isAuthenticated) {
+      return const Positioned.fill(
+        child: AppLockScreen(),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
+class _AuthWrapper extends ConsumerStatefulWidget {
+  const _AuthWrapper();
+
+  @override
+  ConsumerState<_AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends ConsumerState<_AuthWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  void _checkAuth() async {
+    // Small delay to allow providers to mount
+    await Future.delayed(Duration.zero);
+    
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null && mounted) {
+      // User is logged in, navigate to main layout
+      // Note: role-based routing can be added here if we have drivers
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const PassengerMainLayout()),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const WelcomeScreen();
   }
 }
 

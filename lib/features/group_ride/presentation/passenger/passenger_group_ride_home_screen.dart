@@ -6,9 +6,10 @@ import '../../../wallet/presentation/passenger_qr_scan_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
-import 'passenger_group_pickup_screen.dart';
+import 'passenger_group_available_groups_screen.dart';
 import '../../../../core/components/tw_logo.dart';
 import '../../../wallet/data/ride_repository.dart';
+import '../../providers/group_ride_draft_provider.dart';
 
 class PassengerGroupRideHomeScreen extends ConsumerWidget {
   const PassengerGroupRideHomeScreen({super.key});
@@ -126,7 +127,7 @@ class PassengerGroupRideHomeScreen extends ConsumerWidget {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const PassengerGroupPickupScreen()),
+                                    MaterialPageRoute(builder: (context) => const PassengerGroupAvailableGroupsScreen()),
                                   );
                                 },
                               ),
@@ -165,17 +166,32 @@ class PassengerGroupRideHomeScreen extends ConsumerWidget {
                                 );
                               }
                               return Column(
-                                children: rides.take(3).map((ride) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _buildRecentRouteCard(
-                                    icon: Icons.directions_bus_filled_outlined,
-                                    iconBg: AppColors.kekeGreen.withOpacity(0.1),
-                                    iconColor: AppColors.kekeGreen,
-                                    routeText: '${ride['start_location'] ?? 'Unknown'} → ${ride['end_location'] ?? 'Unknown'}',
-                                    subText: 'Recently traveled',
-                                    price: '₦${ride['fare']}',
-                                  ),
-                                )).toList(),
+                                children: rides.take(3).map((ride) {
+                                  final pickup = ride['start_location'] ?? 'Unknown';
+                                  final destination = ride['end_location'] ?? 'Unknown';
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        ref.read(groupRideDraftProvider.notifier)
+                                          ..setPickup(pickup)
+                                          ..setDestination(destination);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const PassengerGroupAvailableGroupsScreen()),
+                                        );
+                                      },
+                                      child: _buildRecentRouteCard(
+                                        icon: Icons.directions_bus_filled_outlined,
+                                        iconBg: AppColors.kekeGreen.withOpacity(0.1),
+                                        iconColor: AppColors.kekeGreen,
+                                        routeText: '$pickup → $destination',
+                                        subText: 'Recently traveled',
+                                        price: '₦${ride['fare']}',
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
                               );
                             },
                             loading: () => const Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),

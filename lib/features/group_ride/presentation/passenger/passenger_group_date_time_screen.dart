@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/components/tw_button.dart';
+import 'package:intl/intl.dart';
 import 'passenger_group_available_groups_screen.dart';
 
 class PassengerGroupDateTimeScreen extends StatefulWidget {
@@ -88,17 +89,15 @@ class _PassengerGroupDateTimeScreenState extends State<PassengerGroupDateTimeScr
                             height: 68,
                             child: ListView(
                               scrollDirection: Axis.horizontal,
-                              children: [
-                                _buildDateCard(0, 'Mon', '12'),
-                                const SizedBox(width: 10),
-                                _buildDateCard(1, 'Tue', '13'),
-                                const SizedBox(width: 10),
-                                _buildDateCard(2, 'Wed', '14'),
-                                const SizedBox(width: 10),
-                                _buildDateCard(3, 'Thu', '15'),
-                                const SizedBox(width: 10),
-                                _buildDateCard(4, 'Fri', '16'),
-                              ],
+                              children: List.generate(5, (index) {
+                                final date = DateTime.now().add(Duration(days: index));
+                                final dayFormat = DateFormat('E');
+                                final dateFormat = DateFormat('d');
+                                return Padding(
+                                  padding: EdgeInsets.only(right: index < 4 ? 10.0 : 0),
+                                  child: _buildDateCard(index, dayFormat.format(date), dateFormat.format(date)),
+                                );
+                              }),
                             ),
                           ),
                         ],

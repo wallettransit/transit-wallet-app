@@ -4,10 +4,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/components/tw_button.dart';
 import '../../../../core/components/tw_text_field.dart';
+import '../../../core/components/tw_phone_prefix.dart';
 import '../../../../core/components/tw_logo.dart';
 import 'driver_registration_screen.dart';
 import 'forgot_password_screen.dart';
-import '../../driver_dashboard/presentation/driver_main_layout.dart';
+import '../../driver/presentation/onboarding/driver_kyc_screen.dart';
 
 class DriverLoginScreen extends StatefulWidget {
   const DriverLoginScreen({super.key});
@@ -87,16 +88,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                           label: 'Phone Number',
                           hintText: '802 899 1234',
                           keyboardType: TextInputType.phone,
-                          prefixIcon: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(width: 16),
-                              Text('+234', style: AppTypography.bodyMedium.copyWith(color: AppColors.muted, fontSize: 16)),
-                              const SizedBox(width: 8),
-                              Container(width: 1, height: 24, color: AppColors.borderStroke),
-                              const SizedBox(width: 12),
-                            ],
-                          ),
+                          prefixIcon: const TWPhonePrefix(),
                         ),
                         const SizedBox(height: 20),
                         
@@ -162,7 +154,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => const DriverMainLayout()),
+                        MaterialPageRoute(builder: (context) => const DriverKYCScreen()),
                         (route) => false,
                       );
                     },

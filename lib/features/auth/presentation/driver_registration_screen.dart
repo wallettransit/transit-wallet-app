@@ -6,6 +6,8 @@ import '../../../core/theme/app_theme.dart';
 import 'driver_login_screen.dart';
 import 'driver_otp_screen.dart';
 import '../../../../core/components/tw_logo.dart';
+import '../../../core/components/tw_snackbar.dart';
+import '../../../core/components/tw_phone_prefix.dart';
 
 class DriverRegistrationScreen extends StatefulWidget {
   const DriverRegistrationScreen({super.key});
@@ -116,16 +118,7 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                               hintStyle: GoogleFonts.manrope(color: AppTheme.muted, fontSize: 16),
                               filled: true,
                               fillColor: AppColors.cardBackground,
-                              prefixIcon: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const SizedBox(width: 16),
-                                  Text('+234', style: GoogleFonts.manrope(color: AppTheme.muted, fontSize: 16, fontWeight: FontWeight.w500)),
-                                  const SizedBox(width: 8),
-                                  Container(width: 1, height: 24, color: AppColors.borderStroke),
-                                  const SizedBox(width: 12),
-                                ],
-                              ),
+                              prefixIcon: const TWPhonePrefix(),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: const BorderSide(color: AppColors.borderStroke, width: 1),

@@ -10,6 +10,7 @@ import '../../../core/components/tw_logo.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_typography.dart';
 import 'passenger_welcome_screen.dart';
+import '../../../../core/services/termii_service.dart';
 
 class PassengerOtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -27,6 +28,7 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
   final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
   bool _isLoading = false;
+  String? _pinId;
   
   Timer? _timer;
   int _secondsRemaining = 30;
@@ -35,6 +37,27 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
   void initState() {
     super.initState();
     _startTimer();
+    _sendOtp();
+  }
+
+  Future<void> _sendOtp() async {
+    try {
+      final pinId = await TermiiService.sendOtp(widget.phoneNumber);
+      if (mounted) {
+        setState(() {
+          _pinId = pinId;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.errorRed,
+          ),
+        );
+      }
+    }
   }
 
   void _startTimer() {
@@ -60,16 +83,39 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
   void _verifyOtp() async {
     final otp = _controllers.map((c) => c.text).join();
     if (otp.length == 4) {
-      setState(() => _isLoading = true);
-      // Simulate network request
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) {
-        setState(() => _isLoading = false);
-        // Assuming success path for logic consistency
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PassengerKycScreen()),
+      if (_pinId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Wait for OTP to be sent before verifying.'),
+            backgroundColor: AppColors.errorRed,
+          ),
         );
+        return;
+      }
+
+      setState(() => _isLoading = true);
+      
+      try {
+        final isValid = await TermiiService.verifyOtp(_pinId!, otp);
+        if (mounted) {
+          setState(() => _isLoading = false);
+          if (isValid) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PassengerKycScreen()),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: AppColors.errorRed,
+            ),
+          );
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -194,8 +240,8 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
                           GestureDetector(
                             onTap: _secondsRemaining == 0
                                 ? () {
-                                    // Handle resend logic here
                                     _startTimer();
+                                    _sendOtp();
                                     setState(() {});
                                   }
                                 : null,
