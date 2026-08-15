@@ -67,12 +67,13 @@ class _TWButtonState extends State<TWButton> {
         curve: Curves.easeOutCubic,
         child: SizedBox(
           width: double.infinity,
-          height: 48,
           child: IgnorePointer(
             child: ElevatedButton(
               // We handle the tap in GestureDetector for the animation
               onPressed: (widget.isLoading || widget.onPressed == null) ? null : () {},
               style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 backgroundColor: backgroundColor,
                 foregroundColor: foregroundColor,
                 disabledBackgroundColor: backgroundColor.withOpacity(0.5),

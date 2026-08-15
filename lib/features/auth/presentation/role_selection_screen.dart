@@ -52,7 +52,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     _buildRoleCard(
                       context: context,
                       title: "I'm a Driver",
-                      subtitle: "Accept fares, view ledger, and cash out instantly.",
+                      subtitle: "Accept fares & cash out instantly.",
                       icon: Icons.directions_bus_filled,
                       color: AppColors.danfoYellow,
                       onTap: () {
@@ -67,7 +67,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     _buildRoleCard(
                       context: context,
                       title: "I'm a Passenger",
-                      subtitle: "Pay fares, scan QR codes, and track your trips.",
+                      subtitle: "Pay fares & track your trips.",
                       icon: Icons.person,
                       color: AppColors.kekeGreen,
                       onTap: () {
@@ -99,7 +99,7 @@ class RoleSelectionScreen extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(20.0),
         decoration: BoxDecoration(
           color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(24),
@@ -115,17 +115,17 @@ class RoleSelectionScreen extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
                 color: color.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child: Icon(icon, color: color, size: 32),
+                child: Icon(icon, color: color, size: 28),
               ),
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

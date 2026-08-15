@@ -130,14 +130,17 @@ class _PassengerQrScanScreenState extends ConsumerState<PassengerQrScanScreen> w
                 const Spacer(),
                 
                 // Scan Area Frame
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 280,
-                      height: 280,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kekeGreen, width: 2),
+                Builder(
+                  builder: (context) {
+                    final scanSize = MediaQuery.of(context).size.width * 0.7;
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: scanSize,
+                          height: scanSize,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.kekeGreen, width: 2),
                         borderRadius: BorderRadius.circular(32),
                       ),
                     ),
@@ -146,9 +149,9 @@ class _PassengerQrScanScreenState extends ConsumerState<PassengerQrScanScreen> w
                       animation: _scanController,
                       builder: (context, child) {
                         return Positioned(
-                          top: 20 + (_scanController.value * 240),
+                          top: 20 + (_scanController.value * (scanSize - 40)),
                           child: Container(
-                            width: 240,
+                            width: scanSize - 40,
                             height: 3,
                             decoration: BoxDecoration(
                               color: AppColors.kekeGreen,
@@ -165,7 +168,9 @@ class _PassengerQrScanScreenState extends ConsumerState<PassengerQrScanScreen> w
                       },
                     ),
                   ],
-                ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack),
+                ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack);
+              },
+            ),
                 
                 const Spacer(),
                 

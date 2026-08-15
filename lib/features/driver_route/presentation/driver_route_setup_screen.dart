@@ -81,7 +81,7 @@ class _DriverRouteSetupScreenState extends State<DriverRouteSetupScreen> {
                   children: [
                     // map-container equivalent
                     SizedBox(
-                      height: 180,
+                      height: MediaQuery.of(context).size.height < 800 ? 140 : 180,
                       width: double.infinity,
                       child: Stack(
                         alignment: Alignment.center,

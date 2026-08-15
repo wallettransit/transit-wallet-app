@@ -15,7 +15,7 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final availableGroupsAsync = ref.watch(availableGroupRidesProvider);
+    final availableGroupsAsync = ref.watch(availableGroupRidesStreamProvider);
     final draft = ref.watch(groupRideDraftProvider);
 
     return Scaffold(
@@ -68,9 +68,7 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
             Expanded(
               child: NotificationListener<ScrollNotification>(
                 onNotification: (ScrollNotification scrollInfo) {
-                  if (scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
-                    ref.read(availableGroupRidesProvider.notifier).loadMore();
-                  }
+                  // Pagination not needed for stream yet  
                   return false;
                 },
                 child: SingleChildScrollView(
@@ -217,7 +215,7 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
-              ref.invalidate(availableGroupRidesProvider);
+              // No need to invalidate stream
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.kekeGreen,
@@ -487,38 +485,44 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.group_outlined, size: 14, color: isLastSeat ? AppColors.danfoYellow : AppColors.muted),
-                        const SizedBox(width: 4),
-                        Text(
-                          seatsAvailable,
-                          style: GoogleFonts.manrope(
-                            color: isLastSeat ? AppColors.danfoYellow : AppColors.muted,
-                            fontSize: 12,
-                            fontWeight: isLastSeat ? FontWeight.bold : FontWeight.normal,
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.group_outlined, size: 14, color: isLastSeat ? AppColors.danfoYellow : AppColors.muted),
+                          const SizedBox(width: 4),
+                          Text(
+                            seatsAvailable,
+                            style: GoogleFonts.manrope(
+                              color: isLastSeat ? AppColors.danfoYellow : AppColors.muted,
+                              fontSize: 12,
+                              fontWeight: isLastSeat ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ).animate(target: isLastSeat ? 1 : 0).scaleXY(begin: 1.0, end: 1.1, duration: 600.ms).then().scaleXY(begin: 1.1, end: 1.0, duration: 600.ms),
+                        ],
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.schedule_outlined, size: 14, color: AppColors.muted),
+                          const SizedBox(width: 4),
+                          Text(
+                            departureTime,
+                            style: GoogleFonts.manrope(
+                              color: AppColors.muted,
+                              fontSize: 12,
+                            ),
                           ),
-                        ).animate(target: isLastSeat ? 1 : 0).scaleXY(begin: 1.0, end: 1.1, duration: 600.ms).then().scaleXY(begin: 1.1, end: 1.0, duration: 600.ms),
-                      ],
-                    ),
-                    const SizedBox(width: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.schedule_outlined, size: 14, color: AppColors.muted),
-                        const SizedBox(width: 4),
-                        Text(
-                          departureTime,
-                          style: GoogleFonts.manrope(
-                            color: AppColors.muted,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -546,7 +550,7 @@ class PassengerGroupAvailableGroupsScreen extends ConsumerWidget {
                       groupPrice,
                       style: GoogleFonts.outfit(
                         color: AppColors.kekeGreen,
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w900,
                       ),
                     ),

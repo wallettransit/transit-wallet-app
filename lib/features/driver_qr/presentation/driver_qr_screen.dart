@@ -159,13 +159,18 @@ class DriverQrScreen extends StatelessWidget {
                             const SizedBox(height: 20),
                             
                             // qr-graphic (placeholder)
-                            Container(
-                              width: 200,
-                              height: 200,
-                              color: AppTheme.ink,
-                              child: const Center(
-                                child: Icon(Icons.qr_code_2, size: 160, color: AppTheme.paper),
-                              ),
+                            Builder(
+                              builder: (context) {
+                                final qrSize = MediaQuery.of(context).size.width * 0.55;
+                                return Container(
+                                  width: qrSize,
+                                  height: qrSize,
+                                  color: AppTheme.ink,
+                                  child: Center(
+                                    child: Icon(Icons.qr_code_2, size: qrSize * 0.8, color: AppTheme.paper),
+                                  ),
+                                );
+                              },
                             ),
                             const SizedBox(height: 20),
                             

@@ -40,7 +40,7 @@ class PassengerProfileScreen extends ConsumerWidget {
         slivers: [
           // Dynamic Glassmorphic App Bar
           SliverAppBar(
-            expandedHeight: 280.0,
+            expandedHeight: MediaQuery.of(context).size.height < 800 ? 260.0 : 280.0,
             floating: false,
             pinned: true,
             backgroundColor: Colors.transparent,
@@ -148,7 +148,7 @@ class PassengerProfileScreen extends ConsumerWidget {
                         fullName,
                         style: GoogleFonts.outfit(
                           color: AppColors.paper,
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                         ),
                       ).animate().fade(delay: 200.ms).slideY(begin: 0.2),
@@ -243,11 +243,11 @@ class PassengerProfileScreen extends ConsumerWidget {
                     ),
                     child: _buildSwitchField(
                       icon: Icons.wifi_off_rounded,
-                      label: 'Simulate Offline Mode',
-                      subtitle: 'Test low connectivity flows',
+                      label: 'Offline Status',
+                      subtitle: isOffline ? 'You are offline' : 'You are online',
                       value: isOffline,
                       onChanged: (val) {
-                        ref.read(offlineStateProvider.notifier).state = val;
+                        // Managed automatically by connectivity_plus
                       },
                     ),
                   ).animate().fade(delay: 500.ms).slideY(begin: 0.1),
@@ -307,7 +307,7 @@ class PassengerProfileScreen extends ConsumerWidget {
     return Text(
       title,
       style: GoogleFonts.outfit(
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: FontWeight.w700,
         color: AppColors.paper,
         letterSpacing: 0.5,
@@ -353,7 +353,7 @@ class PassengerProfileScreen extends ConsumerWidget {
                     Text(
                       value,
                       style: GoogleFonts.outfit(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: AppColors.paper,
                         fontWeight: FontWeight.w600,
                       ),
@@ -407,7 +407,7 @@ class PassengerProfileScreen extends ConsumerWidget {
                 Text(
                   label,
                   style: GoogleFonts.outfit(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: AppColors.paper,
                     fontWeight: FontWeight.w600,
                   ),

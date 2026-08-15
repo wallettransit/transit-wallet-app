@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
+import 'passenger_kyc_screen.dart';
 
 class PassengerMeScreen extends ConsumerWidget {
   const PassengerMeScreen({super.key});
@@ -135,7 +136,13 @@ class PassengerMeScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               _buildSettingsCard([
                 _buildListTile(Icons.credit_card, 'Saved Payment Methods', trailing: const Icon(Icons.chevron_right, color: Colors.white54)),
-                _buildListTile(Icons.verified_user_outlined, 'KYC Verification', subtitle: 'Upgrade to Tier 2', trailing: const Icon(Icons.chevron_right, color: Colors.white54)),
+                _buildListTile(
+                  Icons.verified_user_outlined, 
+                  'KYC Verification', 
+                  subtitle: 'Upgrade to Tier 2', 
+                  trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PassengerKycScreen())),
+                ),
               ]).animate().fade(delay: 300.ms).slideY(begin: 0.1, end: 0),
               
               const SizedBox(height: 24),
@@ -234,8 +241,9 @@ class PassengerMeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildListTile(IconData icon, String title, {String? subtitle, Widget? trailing, Color? iconColor}) {
+  Widget _buildListTile(IconData icon, String title, {String? subtitle, Widget? trailing, Color? iconColor, VoidCallback? onTap}) {
     return ListTile(
+      onTap: onTap,
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(

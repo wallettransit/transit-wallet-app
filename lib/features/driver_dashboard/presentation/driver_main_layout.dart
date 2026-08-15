@@ -35,28 +35,28 @@ class _DriverMainLayoutState extends State<DriverMainLayout> {
       extendBody: true,
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 24.0),
+          padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 24.0),
           child: Container(
             height: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
-              color: AppColors.cardBackground,
+              color: const Color(0xFFEEEEEE), // Light grey background
               borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: AppColors.borderStroke, width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.home_filled, 'Home'),
-                _buildNavItem(1, Icons.description, 'Ledger'),
-                _buildNavItem(2, Icons.account_balance_wallet, 'Cash Out'),
-                _buildNavItem(3, Icons.bar_chart, 'Earnings'),
+                _buildNavItem(0, Icons.home_filled, Icons.home_outlined),
+                _buildNavItem(1, Icons.description, Icons.description_outlined),
+                _buildNavItem(2, Icons.account_balance_wallet, Icons.account_balance_wallet_outlined),
+                _buildNavItem(3, Icons.bar_chart, Icons.bar_chart_outlined),
               ],
             ),
           ),
@@ -86,47 +86,29 @@ class _DriverMainLayoutState extends State<DriverMainLayout> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon) {
     bool isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
+        if (_currentIndex != index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        }
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(horizontal: isSelected ? 16 : 12, vertical: 10),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.kekeGreen.withOpacity(0.15) : Colors.transparent,
+          color: isSelected ? const Color(0xFFD6D6D6) : Colors.transparent, // Darker grey pill for active
           borderRadius: BorderRadius.circular(24),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected ? AppTheme.kekeGreen : AppTheme.muted,
-            ).animate(target: isSelected ? 1 : 0).scale(
-              begin: const Offset(1, 1),
-              end: const Offset(1.1, 1.1),
-              duration: 200.ms,
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: GoogleFonts.manrope(
-                  color: AppTheme.kekeGreen,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ).animate().fade(duration: 200.ms).slideX(begin: 0.2, end: 0),
-            ],
-          ],
+        child: Icon(
+          isSelected ? activeIcon : inactiveIcon,
+          color: Colors.black87, // Black icons for both states
+          size: 26,
         ),
       ),
     );

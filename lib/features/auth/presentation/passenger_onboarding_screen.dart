@@ -67,7 +67,7 @@ class PassengerOnboardingScreen extends StatelessWidget {
                       // Mock Image Card
                       Container(
                         width: double.infinity,
-                        height: 320,
+                        height: MediaQuery.of(context).size.height < 800 ? 240 : 320,
                         decoration: BoxDecoration(
                           color: AppColors.cardBackground,
                           borderRadius: BorderRadius.circular(24),

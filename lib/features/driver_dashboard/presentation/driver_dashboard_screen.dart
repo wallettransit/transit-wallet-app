@@ -8,6 +8,8 @@ import '../../../core/components/tw_qr_bottom_sheet.dart';
 import '../../profile/presentation/driver_profile_screen.dart';
 import '../../group_ride/presentation/driver_group_requests_screen.dart';
 import '../../../core/services/audio_haptic_service.dart';
+import '../../driver/presentation/onboarding/driver_kyc_screen.dart';
+import '../../driver/presentation/onboarding/driver_vehicle_setup_screen.dart';
 
 class DriverDashboardScreen extends StatelessWidget {
   final bool isPendingReview;
@@ -119,6 +121,48 @@ class DriverDashboardScreen extends StatelessWidget {
                   ).animate().fade(duration: 400.ms).slideY(begin: -0.1, end: 0),
                 ),
               if (isPendingReview) const SizedBox(height: 12),
+              
+              // action-prompts (KYC & Vehicle Setup)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  children: [
+                    _buildActionPrompt(
+                      context,
+                      title: 'Action Required: Identity Verification',
+                      subtitle: 'Provide your BVN or NIN to upgrade to Tier 2 and unlock full payouts.',
+                      icon: Icons.shield_outlined,
+                      color: AppTheme.danfoYellow,
+                      onTap: () {
+                        // In a real app this might open a bottom sheet modal, but we can also push the existing screen
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: AppTheme.ink,
+                          builder: (context) => const DriverKYCScreen(), // Repurposing the screen as a modal
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildActionPrompt(
+                      context,
+                      title: 'Action Required: Vehicle Inspection',
+                      subtitle: 'Upload required photos of your vehicle condition to start accepting rides.',
+                      icon: Icons.directions_car_outlined,
+                      color: AppTheme.kekeGreen,
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: AppTheme.ink,
+                          builder: (context) => const DriverVehicleSetupScreen(), // Repurposing as a modal
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               
               // earnings-card
               Padding(
@@ -426,6 +470,59 @@ class DriverDashboardScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildActionPrompt(BuildContext context, {required String title, required String subtitle, required IconData icon, required Color color, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.manrope(
+                      color: AppTheme.paper,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.manrope(
+                      color: AppTheme.muted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right, color: AppTheme.muted, size: 20),
+          ],
+        ),
+      ).animate().fade(duration: 400.ms).slideY(begin: 0.1, end: 0),
     );
   }
 }

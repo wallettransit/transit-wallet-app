@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "477764857728",
+    "project_id": "transit-wallet",
+    "storage_bucket": "transit-wallet.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:477764857728:android:8b1f26eeafcfd918bfdb65",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgmLEDpi5We45oWZf-e0jkULTlfeEQIgQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

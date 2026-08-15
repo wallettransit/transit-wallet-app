@@ -40,36 +40,29 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
       extendBody: true,
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 24.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(40),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                height: 72,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05), // True frosted glass effect
-                  borderRadius: BorderRadius.circular(40),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 30,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+          padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 24.0),
+          child: Container(
+            height: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEEEEE), // Light grey background
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildNavItem(0, Icons.home_filled, Icons.home_outlined, 'Home'),
-                    _buildNavItem(1, Icons.qr_code_scanner, Icons.qr_code_scanner, 'Scan'),
-                    _buildNavItem(2, Icons.history, Icons.history, 'History'),
-                    _buildNavItem(3, Icons.person, Icons.person_outline, 'Me'),
-                  ],
-                ),
-              ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(0, Icons.home_filled, Icons.home_outlined),
+                _buildNavItem(1, Icons.qr_code_scanner, Icons.qr_code_scanner),
+                _buildNavItem(2, Icons.history, Icons.history),
+                _buildNavItem(3, Icons.person, Icons.person_outline),
+              ],
             ),
           ),
         ),
@@ -98,7 +91,7 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label) {
+  Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon) {
     bool isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
@@ -110,33 +103,17 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(horizontal: isSelected ? 20 : 16, vertical: 12),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.kekeGreen.withOpacity(0.2) : Colors.transparent, // Light green pill
-          borderRadius: BorderRadius.circular(32),
+          color: isSelected ? const Color(0xFFD6D6D6) : Colors.transparent, // Darker grey pill for active
+          borderRadius: BorderRadius.circular(24),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? activeIcon : inactiveIcon,
-              color: isSelected ? AppColors.kekeGreen : Colors.white70,
-              size: 24,
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: GoogleFonts.manrope(
-                  color: AppColors.kekeGreen,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ).animate().fade(duration: 200.ms).slideX(begin: -0.2, end: 0),
-            ]
-          ],
+        child: Icon(
+          isSelected ? activeIcon : inactiveIcon,
+          color: Colors.black87, // Black icons for both states
+          size: 26,
         ),
       ),
     );

@@ -10,6 +10,8 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../../wallet/data/wallet_repository.dart';
 import '../../data/driver_repository.dart';
 import '../../../../core/components/tw_updates_carousel.dart';
+import '../../../group_ride/data/group_ride_repository.dart';
+import '../../../../core/components/tw_snackbar.dart';
 
 class DriverDashboardScreen extends ConsumerStatefulWidget {
   const DriverDashboardScreen({super.key});
@@ -314,9 +316,9 @@ class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
 
                             const SizedBox(height: 32),
 
-                            // Ledger (Placeholder for v0)
+                            // Available Rides (Realtime)
                             Text(
-                              'Recent Transactions',
+                              'Available Group Rides',
                               style: GoogleFonts.outfit(
                                 color: AppColors.paper,
                                 fontSize: 18,
@@ -324,17 +326,39 @@ class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
                               ),
                             ).animate().fade(delay: 500.ms),
                             const SizedBox(height: 16),
-                            Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 32.0),
-                                child: Text(
-                                  'Awaiting your first passenger...',
-                                  style: GoogleFonts.manrope(
-                                    color: AppColors.muted,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ),
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final ridesAsync = ref.watch(availableGroupRidesStreamProvider);
+                                return ridesAsync.when(
+                                  data: (rides) {
+                                    if (rides.isEmpty) {
+                                      return Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 32.0),
+                                          child: Text(
+                                            'No open rides at the moment.',
+                                            style: GoogleFonts.manrope(
+                                              color: AppColors.muted,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: rides.length,
+                                      itemBuilder: (context, index) {
+                                        final ride = rides[index];
+                                        return _DriverRideCard(ride: ride, driverId: user.id);
+                                      },
+                                    );
+                                  },
+                                  loading: () => const Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
+                                  error: (err, st) => Text('Error: $err', style: const TextStyle(color: Colors.red)),
+                                );
+                              },
                             ).animate().fade(delay: 600.ms),
                           ],
                         ),
@@ -347,3 +371,97 @@ class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
     );
   }
 }
+
+class _DriverRideCard extends ConsumerStatefulWidget {
+  final Map<String, dynamic> ride;
+  final String driverId;
+
+  const _DriverRideCard({required this.ride, required this.driverId});
+
+  @override
+  ConsumerState<_DriverRideCard> createState() => _DriverRideCardState();
+}
+
+class _DriverRideCardState extends ConsumerState<_DriverRideCard> {
+  bool _isAccepting = false;
+
+  void _acceptRide() async {
+    setState(() => _isAccepting = true);
+    final repo = ref.read(groupRideRepositoryProvider);
+    final res = await repo.acceptGroupRide(
+      groupId: widget.ride['id'],
+      driverId: widget.driverId,
+    );
+    if (mounted) {
+      setState(() => _isAccepting = false);
+      if (res['success'] == true) {
+        TWSnackbar.showSuccess(context, 'Ride Accepted! Drive safe.');
+      } else {
+        TWSnackbar.showError(context, 'Failed: ${res['message']}');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pickup = widget.ride['pickup_location'] ?? 'Unknown';
+    final destination = widget.ride['destination'] ?? 'Unknown';
+    final fare = widget.ride['fare_per_person'] ?? 0;
+    final capacity = widget.ride['capacity'] ?? 4;
+    final joined = widget.ride['joined_count'] ?? 1;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.ink,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderStroke),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  '$pickup → $destination',
+                  style: GoogleFonts.outfit(color: AppColors.paper, fontSize: 18, fontWeight: FontWeight.bold),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.kekeGreen.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$joined/$capacity',
+                  style: GoogleFonts.manrope(color: AppColors.kekeGreen, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '₦$fare per person',
+            style: GoogleFonts.manrope(color: AppColors.muted, fontSize: 14),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: TWButton(
+              label: 'Accept Ride',
+              onPressed: _isAccepting ? () {} : _acceptRide,
+              isLoading: _isAccepting,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

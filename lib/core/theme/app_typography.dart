@@ -5,59 +5,59 @@ import 'app_colors.dart';
 class AppTypography {
   // Headings (Outfit)
   static TextStyle heading1 = GoogleFonts.outfit(
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: FontWeight.w700,
-    height: 30.2 / 24,
+    height: 1.2,
     color: AppColors.paper,
   );
 
   static TextStyle heading2 = GoogleFonts.outfit(
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: FontWeight.w700,
-    height: 25.2 / 20,
+    height: 1.2,
     color: AppColors.paper,
   );
 
   static TextStyle heading3 = GoogleFonts.outfit(
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: FontWeight.w600,
-    height: 20.2 / 16,
+    height: 1.2,
     color: AppColors.paper,
   );
 
   // Body text (Manrope)
   static TextStyle bodyLarge = GoogleFonts.manrope(
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: FontWeight.w600,
-    height: 22.5 / 15,
+    height: 1.4,
     color: AppColors.paper,
   );
 
   static TextStyle bodyMedium = GoogleFonts.manrope(
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
-    height: 19.5 / 13,
+    height: 1.4,
     color: AppColors.paper,
   );
 
   static TextStyle bodySmall = GoogleFonts.manrope(
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: FontWeight.w500,
-    height: 18.0 / 12,
+    height: 1.4,
     color: AppColors.muted,
   );
 
   static TextStyle label = GoogleFonts.manrope(
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: FontWeight.w700,
-    height: 16.5 / 11,
+    height: 1.4,
     color: AppColors.paper,
   );
 
   static TextStyle numericLarge = GoogleFonts.manrope(
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: FontWeight.w800,
-    height: 44.0 / 32,
+    height: 1.2,
     color: AppColors.paper,
   );
 }

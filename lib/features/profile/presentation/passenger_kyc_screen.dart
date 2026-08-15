@@ -6,6 +6,7 @@ import '../../../../core/components/tw_button.dart';
 import '../../../../core/components/tw_logo.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../wallet/presentation/passenger_main_layout.dart';
+import '../../kyc/data/kyc_repository.dart';
 
 class PassengerKycScreen extends ConsumerStatefulWidget {
   const PassengerKycScreen({super.key});
@@ -48,10 +49,15 @@ class _PassengerKycScreenState extends ConsumerState<PassengerKycScreen> {
       _errorMessage = null;
     });
 
-    final authRepo = ref.read(authRepositoryProvider);
-    final result = await authRepo.upgradeToTierOne(
-      dob: _dobController.text,
-      address: _addressController.text,
+    final repo = ref.read(kycRepositoryProvider);
+    final user = ref.read(authRepositoryProvider).currentUser;
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    
+    final result = await repo.verifyAndUpgradeTier(
+      userId: user.id,
       bvn: _bvnController.text,
     );
 

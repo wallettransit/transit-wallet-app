@@ -9,6 +9,8 @@ import 'package:flutter/services.dart';
 import 'core/providers/network_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'core/services/push_notification_service.dart';
 import 'core/services/session_manager.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/wallet/presentation/passenger_main_layout.dart';
@@ -31,6 +33,12 @@ void main() async {
   } catch (e) {
     debugPrint("Failed to initialize Supabase: $e");
   }
+
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Failed to initialize Firebase: $e");
+  }
   
   // Make the app full screen (edge-to-edge)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -49,8 +57,22 @@ void main() async {
   );
 }
 
-class TransitWalletApp extends StatelessWidget {
+class TransitWalletApp extends ConsumerStatefulWidget {
   const TransitWalletApp({super.key});
+
+  @override
+  ConsumerState<TransitWalletApp> createState() => _TransitWalletAppState();
+}
+
+class _TransitWalletAppState extends ConsumerState<TransitWalletApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize push notifications after the widget is mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(pushNotificationServiceProvider).initialize();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
-/// A global provider to mock the offline state of the application.
-/// In a real application, this would listen to connectivity_plus.
-final offlineStateProvider = StateProvider<bool>((ref) => false);
+final networkStatusProvider = StreamProvider<List<ConnectivityResult>>((ref) {
+  return Connectivity().onConnectivityChanged;
+});
+
+final offlineStateProvider = Provider<bool>((ref) {
+  final status = ref.watch(networkStatusProvider).valueOrNull;
+  if (status == null) return false;
+  return status.contains(ConnectivityResult.none) && status.length == 1;
+});

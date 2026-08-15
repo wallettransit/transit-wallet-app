@@ -7,6 +7,7 @@ import '../../../../core/components/tw_button.dart';
 import '../../../../core/components/tw_text_field.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../data/driver_repository.dart';
+import '../../../kyc/data/kyc_repository.dart';
 import 'driver_vehicle_setup_screen.dart';
 
 class DriverKYCScreen extends ConsumerStatefulWidget {
@@ -42,8 +43,8 @@ class _DriverKYCScreenState extends ConsumerState<DriverKYCScreen> {
       return;
     }
 
-    final repo = ref.read(driverRepositoryProvider);
-    final result = await repo.submitKYC(userId: currentUser.id, bvnOrNin: bvn);
+    final repo = ref.read(kycRepositoryProvider);
+    final result = await repo.verifyAndUpgradeTier(userId: currentUser.id, bvn: bvn);
 
     if (mounted) {
       setState(() => _isLoading = false);

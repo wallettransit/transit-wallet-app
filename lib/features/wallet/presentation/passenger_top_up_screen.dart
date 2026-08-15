@@ -4,14 +4,21 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/components/tw_button.dart';
 
-class PassengerTopUpScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../data/wallet_repository.dart';
+import '../../../core/components/tw_snackbar.dart';
+import '../../profile/providers/profile_provider.dart';
+import '../../profile/presentation/passenger_kyc_screen.dart';
+
+class PassengerTopUpScreen extends ConsumerStatefulWidget {
   const PassengerTopUpScreen({super.key});
 
   @override
-  State<PassengerTopUpScreen> createState() => _PassengerTopUpScreenState();
+  ConsumerState<PassengerTopUpScreen> createState() => _PassengerTopUpScreenState();
 }
 
-class _PassengerTopUpScreenState extends State<PassengerTopUpScreen> {
+class _PassengerTopUpScreenState extends ConsumerState<PassengerTopUpScreen> {
   final TextEditingController _amountController = TextEditingController(text: '2000');
   int _selectedMethodIndex = 0;
   
@@ -23,14 +30,46 @@ class _PassengerTopUpScreenState extends State<PassengerTopUpScreen> {
     });
   }
 
-  void _fundWallet() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Funded ₦${_amountController.text} successfully!'),
-        backgroundColor: AppColors.kekeGreen,
-      ),
-    );
-    Navigator.pop(context);
+  bool _isLoading = false;
+
+  void _fundWallet() async {
+    final amount = double.tryParse(_amountController.text);
+    if (amount == null || amount <= 0) {
+      TWSnackbar.showError(context, 'Please enter a valid amount');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    
+    final user = ref.read(authRepositoryProvider).currentUser;
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    
+    // KYC Tier Enforcement
+    final profile = await ref.read(userProfileProvider.future);
+    final kycTier = profile?['kyc_tier'] ?? 'tier_1';
+    
+    if (kycTier == 'tier_1' && amount > 10000) {
+      setState(() => _isLoading = false);
+      TWSnackbar.showError(context, 'Tier 1 accounts are limited to ₦10,000 max per top-up. Please verify your BVN to upgrade.');
+      return;
+    }
+
+    final repo = ref.read(walletRepositoryProvider);
+    final res = await repo.fundWallet(userId: user.id, amount: amount);
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (res['success'] == true) {
+        ref.invalidate(walletBalanceProvider);
+        TWSnackbar.showSuccess(context, 'Funded ₦${_amountController.text} successfully!');
+        Navigator.pop(context);
+      } else {
+        TWSnackbar.showError(context, res['message'] ?? 'Funding failed');
+      }
+    }
   }
 
   @override
@@ -185,7 +224,8 @@ class _PassengerTopUpScreenState extends State<PassengerTopUpScreen> {
               ),
               child: TWButton(
                 label: 'Fund Wallet',
-                onPressed: _fundWallet,
+                onPressed: _isLoading ? () {} : _fundWallet,
+                isLoading: _isLoading,
               ),
             ).animate().fade(delay: 1000.ms).slideY(begin: 1.0, end: 0),
           ],

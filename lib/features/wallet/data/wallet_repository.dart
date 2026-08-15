@@ -61,4 +61,59 @@ class WalletRepository {
       return {'success': false, 'message': 'An unexpected error occurred: $e'};
     }
   }
+
+  Future<Map<String, dynamic>> fundWallet({
+    required String userId,
+    required double amount,
+  }) async {
+    try {
+      final response = await _client.rpc('fund_wallet_mock', params: {
+        'p_user_id': userId,
+        'p_amount': amount,
+      });
+      return {'success': true, 'data': response};
+    } catch (e) {
+      return {'success': false, 'message': 'Funding failed: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> processRidePayment({
+    required String passengerId,
+    required String driverId,
+    required double amount,
+    required String groupId,
+  }) async {
+    try {
+      final response = await _client.rpc('process_ride_payment', params: {
+        'p_passenger_id': passengerId,
+        'p_driver_id': driverId,
+        'p_amount': amount,
+        'p_group_id': groupId,
+      });
+      
+      if (response != null && response['success'] == true) {
+        return {'success': true, 'message': response['message']};
+      } else {
+        return {'success': false, 'message': response != null ? response['message'] : 'Unknown error'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Payment failed: $e'};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getTransactionHistory(String userId) async {
+    try {
+      final response = await _client
+          .from('wallet_transactions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(20);
+      
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error fetching transactions: $e');
+      return [];
+    }
+  }
 }

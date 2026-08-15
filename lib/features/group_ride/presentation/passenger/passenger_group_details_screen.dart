@@ -7,8 +7,10 @@ import '../../../../core/components/tw_profile_avatar.dart';
 import '../../../../core/components/tw_live_tracking_map.dart';
 import '../../../../core/components/tw_snackbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../data/group_ride_repository.dart';
+import '../../../wallet/data/wallet_repository.dart';
 import 'passenger_group_fare_review_screen.dart';
 
 class PassengerGroupDetailsScreen extends ConsumerStatefulWidget {
@@ -219,44 +221,89 @@ class _PassengerGroupDetailsScreenState extends ConsumerState<PassengerGroupDeta
                     ).animate().fade(duration: 400.ms, delay: 300.ms).slideY(begin: 0.1),
 
                     const SizedBox(height: 24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: isCreator 
-                        ? Row(
-                            children: [
-                              Expanded(
-                                child: TWButton(
-                                  label: 'Delete',
-                                  icon: Icons.delete_outline,
-                                  onPressed: _isLoading ? () {} : () => _showDeleteDialog(context),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final rideAsync = ref.watch(groupRideDetailsStreamProvider(widget.groupId));
+                        return rideAsync.when(
+                          data: (ride) {
+                            if (ride == null) return const SizedBox();
+                            
+                            final status = ride['status'] as String?;
+                            final driverId = ride['driver_id'] as String?;
+                            
+                            if (status == 'departed' && driverId != null) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: TWButton(
+                                    label: 'Pay for Ride (₦${widget.baseFare.toStringAsFixed(0)})',
+                                    icon: Icons.payment,
+                                    isLoading: _isLoading,
+                                    onPressed: _isLoading ? () {} : () => _payForRide(driverId),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TWButton(
-                                  label: 'Rename',
-                                  icon: Icons.edit_outlined,
-                                  onPressed: _isLoading ? () {} : () => _showRenameDialog(context),
-                                ),
-                              ),
-                            ],
-                          )
-                        : SizedBox(
-                            width: double.infinity,
-                            child: TWButton(
-                              label: 'Join Group Ride',
-                              icon: Icons.arrow_forward,
-                              onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => PassengerGroupFareReviewScreen(
-                                      groupId: widget.groupId,
-                                      baseFare: widget.baseFare,
-                                    )),
-                                  );
-                              },
-                            ),
-                          ),
+                              );
+                            }
+                            
+                            final membersAsync = ref.watch(groupRideMembersProvider(widget.groupId));
+                            final isMember = membersAsync.maybeWhen(
+                              data: (members) => members.any((m) => m['user_id'] == currentUser?.id),
+                              orElse: () => false,
+                            );
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: isCreator 
+
+                                ? Row(
+                                    children: [
+                                      Expanded(
+                                        child: TWButton(
+                                          label: 'Delete',
+                                          icon: Icons.delete_outline,
+                                          onPressed: _isLoading ? () {} : () => _showDeleteDialog(context),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TWButton(
+                                          label: 'Rename',
+                                          icon: Icons.edit_outlined,
+                                          onPressed: _isLoading ? () {} : () => _showRenameDialog(context),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : SizedBox(
+                                    width: double.infinity,
+                                    child: isMember
+                                        ? TWButton(
+                                            label: 'Already Joined',
+                                            icon: Icons.check_circle_outline,
+                                            onPressed: null, // This disables the button and applies opacity
+                                            variant: TWButtonVariant.secondary,
+                                          )
+                                        : TWButton(
+                                            label: 'Join Group Ride',
+                                            icon: Icons.arrow_forward,
+                                            onPressed: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(builder: (context) => PassengerGroupFareReviewScreen(
+                                                    groupId: widget.groupId,
+                                                    baseFare: widget.baseFare,
+                                                  )),
+                                                );
+                                            },
+                                          ),
+                                  ),
+                            );
+                          },
+                          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
+                          error: (e, st) => const SizedBox(),
+                        );
+                      }
                     ).animate().fade(duration: 400.ms, delay: 400.ms),
                     const SizedBox(height: 24),
                   ],
@@ -305,6 +352,31 @@ class _PassengerGroupDetailsScreenState extends ConsumerState<PassengerGroupDeta
     );
   }
 
+  void _payForRide(String driverId) async {
+    final user = ref.read(authRepositoryProvider).currentUser;
+    if (user == null) return;
+    
+    setState(() => _isLoading = true);
+    
+    final repo = ref.read(walletRepositoryProvider);
+    final res = await repo.processRidePayment(
+      passengerId: user.id,
+      driverId: driverId,
+      amount: widget.baseFare,
+      groupId: widget.groupId,
+    );
+    
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (res['success'] == true) {
+        TWSnackbar.showSuccess(context, 'Payment successful!');
+        ref.invalidate(walletBalanceProvider);
+      } else {
+        TWSnackbar.showError(context, res['message'] ?? 'Payment failed');
+      }
+    }
+  }
+
   void _showDeleteDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -326,7 +398,7 @@ class _PassengerGroupDetailsScreenState extends ConsumerState<PassengerGroupDeta
               if (mounted) {
                 setState(() => _isLoading = false);
                 if (res['success'] == true) {
-                  ref.refresh(availableGroupRidesProvider);
+                  // ref.refresh(availableGroupRidesProvider);
                   Navigator.pop(context);
                 } else {
                   TWSnackbar.showError(context, 'Error: ${res['message']}');
@@ -374,7 +446,7 @@ class _PassengerGroupDetailsScreenState extends ConsumerState<PassengerGroupDeta
               if (mounted) {
                 setState(() => _isLoading = false);
                 if (res['success'] == true) {
-                  ref.refresh(availableGroupRidesProvider);
+                  // ref.refresh(availableGroupRidesProvider);
                   Navigator.pop(context);
                 } else {
                   TWSnackbar.showError(context, 'Error: ${res['message']}');
