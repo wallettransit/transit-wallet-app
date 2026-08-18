@@ -71,6 +71,32 @@ class AuthRepository {
     );
   }
 
+  Future<void> signUpDriver({
+    required String email,
+    required String phone,
+    required String password,
+    required String fullName,
+  }) async {
+    final response = await _supabase.functions.invoke(
+      'driver-register',
+      body: {
+        'fullName': fullName,
+        'email': email,
+        'phone': phone,
+        'password': password,
+      },
+    );
+    
+    if (response.status != 200 || response.data['success'] != true) {
+      throw Exception(response.data['error'] ?? 'Registration failed');
+    }
+    
+    // Automatically log them in after registration
+    if (email.isNotEmpty) {
+      await signInWithEmailAndPassword(email: email, password: password);
+    }
+  }
+
   Future<AuthResponse> signInWithEmailAndPassword({
     required String email,
     required String password,

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/auth_repository.dart';
+import '../../../core/services/secure_storage_service.dart';
 
 final supabaseProvider = Provider<SupabaseClient>((ref) {
   return Supabase.instance.client;
@@ -69,7 +70,25 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
       state = AsyncValue.error("An unexpected error occurred. Please try again.", st);
     }
   }
-
+  Future<void> signUpDriver({
+    required String email,
+    required String password,
+    required String fullName,
+    required String phone,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      await _authRepository.signUpDriver(
+        email: email,
+        password: password,
+        fullName: fullName,
+        phone: phone,
+      );
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e.toString(), st);
+    }
+  }
   Future<void> signIn({
     required String email,
     required String password,
@@ -80,6 +99,10 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
         email: email,
         password: password,
       );
+      
+      // Save credentials for Biometric Login
+      await SecureStorageService.saveCredentials(email, password);
+      
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);

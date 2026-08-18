@@ -49,9 +49,9 @@ class _DriverKYCScreenState extends ConsumerState<DriverKYCScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (result['success']) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DriverVehicleSetupScreen()),
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Identity verified successfully!'), backgroundColor: AppColors.kekeGreen),
         );
       } else {
         setState(() => _errorMessage = result['message']);
@@ -61,22 +61,46 @@ class _DriverKYCScreenState extends ConsumerState<DriverKYCScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cardBackground,
-      body: SafeArea(
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.ink,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+        ),
+      child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.only(
+            left: 24.0, 
+            right: 24.0, 
+            top: 16.0, 
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0
+          ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              // Pill handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              
               // Icon
               Container(
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: AppColors.kekeGreen.withOpacity(0.1),
+                  color: AppColors.kekeGreen.withOpacity(0.15),
                   shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.kekeGreen.withOpacity(0.4)),
                 ),
                 child: const Icon(Icons.verified_user_outlined, color: AppColors.kekeGreen, size: 32),
               ).animate().scale(delay: 200.ms, duration: 400.ms),
@@ -85,18 +109,19 @@ class _DriverKYCScreenState extends ConsumerState<DriverKYCScreen> {
               
               Text(
                 'Verify your Identity',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.spaceGrotesk(
                   color: AppColors.paper,
                   fontSize: 28,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
                 ),
               ).animate().fade(delay: 300.ms).slideY(begin: 0.1),
               
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               
               Text(
                 'To accept payouts directly to your bank account, we need your BVN or NIN as part of our secure onboarding.',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.outfit(
                   color: AppColors.muted,
                   fontSize: 15,
                   height: 1.5,
@@ -113,15 +138,16 @@ class _DriverKYCScreenState extends ConsumerState<DriverKYCScreen> {
                     decoration: BoxDecoration(
                       color: Colors.redAccent.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.error_outline, color: Colors.redAccent, size: 20),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: GoogleFonts.manrope(
+                            style: GoogleFonts.outfit(
                               color: Colors.redAccent,
                               fontSize: 14,
                             ),
@@ -132,26 +158,69 @@ class _DriverKYCScreenState extends ConsumerState<DriverKYCScreen> {
                   ),
                 ).animate().fade(),
 
-              TWTextField(
-                label: 'BVN or NIN',
-                controller: _bvnController,
-                hintText: 'Enter 11-digit number',
-                keyboardType: TextInputType.number,
-                prefixIcon: const Icon(Icons.numbers, color: AppColors.paper, size: 20),
+              Theme(
+                data: Theme.of(context).copyWith(
+                  inputDecorationTheme: InputDecorationTheme(
+                    filled: true,
+                    fillColor: AppColors.cardBackground,
+                    labelStyle: GoogleFonts.outfit(color: AppColors.muted),
+                    hintStyle: GoogleFonts.outfit(color: Colors.white24),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.white10),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.white10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: AppColors.kekeGreen),
+                    ),
+                  ),
+                ),
+                child: TextField(
+                  controller: _bvnController,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.outfit(color: AppColors.paper, fontSize: 16),
+                  decoration: const InputDecoration(
+                    labelText: 'BVN or NIN',
+                    hintText: 'Enter 11-digit number',
+                    prefixIcon: Icon(Icons.numbers, color: AppColors.muted, size: 20),
+                  ),
+                ),
               ).animate().fade(delay: 500.ms).slideY(begin: 0.1),
 
-              const Spacer(),
+              const SizedBox(height: 40),
 
               SizedBox(
                 width: double.infinity,
-                child: TWButton(
-                  label: _isLoading ? 'Verifying...' : 'Verify & Continue',
+                child: ElevatedButton(
                   onPressed: _isLoading ? () {} : _submitKYC,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.kekeGreen,
+                    foregroundColor: AppColors.ink,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _isLoading 
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: AppColors.ink, strokeWidth: 2))
+                    : Text(
+                        'Verify & Continue',
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                 ),
               ).animate().fade(delay: 600.ms).slideY(begin: 0.1),
             ],
           ),
         ),
+      ),
       ),
     );
   }

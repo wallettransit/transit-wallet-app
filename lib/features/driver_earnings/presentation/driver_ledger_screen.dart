@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -12,8 +13,16 @@ class DriverLedgerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.ink,
-      body: SafeArea(
-        child: Column(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+            center: Alignment(-0.8, -0.8),
+            radius: 1.5,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
           children: [
             // screen-header
             Padding(
@@ -54,104 +63,124 @@ class DriverLedgerScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'GROSS FARES',
-                            style: GoogleFonts.manrope(
-                              color: AppTheme.muted,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              height: 15.0 / 10,
-                            ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '₦22,100',
-                            style: GoogleFonts.manrope(
-                              color: AppTheme.paper,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              height: 19.1 / 14,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'GROSS FARES',
+                                style: GoogleFonts.manrope(
+                                  color: AppTheme.muted,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  height: 15.0 / 10,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '₦22,100',
+                                style: GoogleFonts.manrope(
+                                  color: AppTheme.paper,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  height: 19.1 / 14,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ).animate().fade(duration: 400.ms).slideX(begin: -0.2, end: 0, curve: Curves.easeOut),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'DEDUCTIONS',
-                            style: GoogleFonts.manrope(
-                              color: AppTheme.muted,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              height: 15.0 / 10,
-                            ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '-₦3,650',
-                            style: GoogleFonts.manrope(
-                              color: AppColors.errorRed,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              height: 19.1 / 14,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'DEDUCTIONS',
+                                style: GoogleFonts.manrope(
+                                  color: AppTheme.muted,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  height: 15.0 / 10,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '-₦3,650',
+                                style: GoogleFonts.manrope(
+                                  color: AppColors.errorRed,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  height: 19.1 / 14,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ).animate().fade(duration: 400.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        color: AppTheme.kekeGreen.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.kekeGreen.withOpacity(0.5), width: 1),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'NET EARNING',
-                            style: GoogleFonts.manrope(
-                              color: AppTheme.kekeGreen,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              height: 15.0 / 10,
-                            ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: AppTheme.kekeGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.kekeGreen.withOpacity(0.3), width: 1),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '₦18,450',
-                            style: GoogleFonts.manrope(
-                              color: AppTheme.kekeGreen,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              height: 19.1 / 14,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'NET EARNING',
+                                style: GoogleFonts.manrope(
+                                  color: AppTheme.kekeGreen,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  height: 15.0 / 10,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '₦18,450',
+                                style: GoogleFonts.manrope(
+                                  color: AppTheme.kekeGreen,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  height: 19.1 / 14,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ).animate().fade(duration: 400.ms).slideX(begin: 0.2, end: 0, curve: Curves.easeOut),
                   ),
@@ -190,6 +219,7 @@ class DriverLedgerScreen extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -217,14 +247,19 @@ class DriverLedgerScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => const DriverDisputeScreen()),
                 );
               },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8.0),
-                padding: const EdgeInsets.all(14.0),
-                decoration: BoxDecoration(
-                  color: AppColors.cardBackground,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8.0),
+                    padding: const EdgeInsets.all(14.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                    ),
+                    child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
@@ -279,7 +314,9 @@ class DriverLedgerScreen extends StatelessWidget {
                   ],
                 ),
               ),
-            ).animate(delay: (items.indexOf(item) * 100).ms).fade(duration: 400.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
+            ),
+          ),
+        ).animate(delay: (items.indexOf(item) * 100).ms).fade(duration: 400.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
           }).toList(),
         ),
       ],

@@ -3,26 +3,75 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 import 'driver_login_screen.dart';
 import 'driver_otp_screen.dart';
 import '../../../../core/components/tw_logo.dart';
 import '../../../core/components/tw_snackbar.dart';
 import '../../../core/components/tw_phone_prefix.dart';
 
-class DriverRegistrationScreen extends StatefulWidget {
+class DriverRegistrationScreen extends ConsumerStatefulWidget {
   const DriverRegistrationScreen({super.key});
 
   @override
-  State<DriverRegistrationScreen> createState() => _DriverRegistrationScreenState();
+  ConsumerState<DriverRegistrationScreen> createState() => _DriverRegistrationScreenState();
 }
 
-class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
+class _DriverRegistrationScreenState extends ConsumerState<DriverRegistrationScreen> {
   bool _agreed = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _handleRegister() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      TWSnackbar.showError(context, 'Passwords do not match');
+      return;
+    }
+    
+    await ref.read(authControllerProvider.notifier).signUpDriver(
+      email: _emailController.text.trim(),
+      phone: '+234${_phoneController.text.trim()}',
+      password: _passwordController.text,
+      fullName: _nameController.text.trim(),
+    );
+
+    final authState = ref.read(authControllerProvider);
+    if (!authState.hasError) {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => DriverOtpScreen(
+            phone: '+234${_phoneController.text.trim()}',
+            email: _emailController.text.trim(),
+          )),
+        );
+      }
+    } else {
+      TWSnackbar.showError(context, authState.error.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
     return Scaffold(
       backgroundColor: AppTheme.ink,
       body: SafeArea(
@@ -94,7 +143,19 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInputField('Full Name', 'Alhaji Kehinde'),
+                        _buildInputField(
+                          label: 'Full Name', 
+                          hint: 'Alhaji Kehinde',
+                          keyboardType: TextInputType.name,
+                          controller: _nameController,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInputField(
+                          label: 'Email Address', 
+                          hint: 'alhaji@example.com',
+                          keyboardType: TextInputType.emailAddress,
+                          controller: _emailController,
+                        ),
                         const SizedBox(height: 16),
                         
                         // phone-field
@@ -111,6 +172,7 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                         SizedBox(
                           height: 56,
                           child: TextField(
+                            controller: _phoneController,
                             keyboardType: TextInputType.phone,
                             style: GoogleFonts.manrope(color: AppTheme.paper, fontSize: 16, fontWeight: FontWeight.w500),
                             decoration: InputDecoration(
@@ -132,12 +194,12 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                         ),
                         const SizedBox(height: 16),
                         
-                        _buildPasswordField('Choose Password', 'At least 8 characters', _obscurePassword, () {
+                        _buildPasswordField('Choose Password', 'At least 8 characters', _obscurePassword, _passwordController, () {
                           setState(() => _obscurePassword = !_obscurePassword);
                         }),
                         const SizedBox(height: 16),
                         
-                        _buildPasswordField('Confirm Password', 'Re-enter password', _obscureConfirm, () {
+                        _buildPasswordField('Confirm Password', 'Re-enter password', _obscureConfirm, _confirmPasswordController, () {
                           setState(() => _obscureConfirm = !_obscureConfirm);
                         }),
                         const SizedBox(height: 24),
@@ -197,12 +259,7 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: _agreed ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const DriverOtpScreen()),
-                        );
-                      } : null,
+                      onPressed: (_agreed && !isLoading) ? _handleRegister : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.kekeGreen,
                         foregroundColor: AppTheme.ink,
@@ -213,14 +270,23 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: Text(
-                        'Create Account',
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          height: 20.2 / 16,
-                        ),
-                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppTheme.ink,
+                              ),
+                            )
+                          : Text(
+                              'Create Account',
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                height: 20.2 / 16,
+                              ),
+                            ),
                     ).animate(target: _agreed ? 1 : 0).shimmer(duration: 2000.ms, color: Colors.white24).scale(
                       begin: const Offset(1, 1),
                       end: const Offset(1.02, 1.02),
@@ -269,7 +335,12 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
     );
   }
 
-  Widget _buildInputField(String label, String hint) {
+  Widget _buildInputField({
+    required String label, 
+    required String hint, 
+    TextInputType? keyboardType,
+    TextEditingController? controller,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -286,6 +357,8 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
         SizedBox(
           height: 56,
           child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
             style: GoogleFonts.manrope(color: AppTheme.paper, fontSize: 16, fontWeight: FontWeight.w500),
             decoration: InputDecoration(
               hintText: hint,
@@ -307,7 +380,7 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
     );
   }
 
-  Widget _buildPasswordField(String label, String hint, bool obscure, VoidCallback onToggle) {
+  Widget _buildPasswordField(String label, String hint, bool obscure, TextEditingController controller, VoidCallback onToggle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -324,6 +397,7 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
         SizedBox(
           height: 56,
           child: TextField(
+            controller: controller,
             obscureText: obscure,
             style: GoogleFonts.manrope(color: AppTheme.paper, fontSize: 16, fontWeight: FontWeight.w500),
             decoration: InputDecoration(

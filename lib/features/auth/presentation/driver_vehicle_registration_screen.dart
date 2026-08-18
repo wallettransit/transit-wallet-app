@@ -5,17 +5,69 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/components/tw_button.dart';
 import '../../../../core/components/tw_text_field.dart';
 import '../../../../core/components/tw_vehicle_type_card.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../driver/data/driver_repository.dart';
+import '../../../../core/components/tw_snackbar.dart';
 import 'driver_document_upload_screen.dart';
 
-class DriverVehicleRegistrationScreen extends StatefulWidget {
+class DriverVehicleRegistrationScreen extends ConsumerStatefulWidget {
   const DriverVehicleRegistrationScreen({super.key});
 
   @override
-  State<DriverVehicleRegistrationScreen> createState() => _DriverVehicleRegistrationScreenState();
+  ConsumerState<DriverVehicleRegistrationScreen> createState() => _DriverVehicleRegistrationScreenState();
 }
 
-class _DriverVehicleRegistrationScreenState extends State<DriverVehicleRegistrationScreen> {
+class _DriverVehicleRegistrationScreenState extends ConsumerState<DriverVehicleRegistrationScreen> {
   String _selectedVehicleType = 'Danfo';
+  final TextEditingController _licensePlateController = TextEditingController();
+  final TextEditingController _manufacturerController = TextEditingController();
+  final TextEditingController _colorController = TextEditingController();
+  bool _isLoading = false;
+  String? _photoPath; // We'll hold the mock path here
+
+  @override
+  void dispose() {
+    _licensePlateController.dispose();
+    _manufacturerController.dispose();
+    _colorController.dispose();
+    super.dispose();
+  }
+
+  void _submitVehicleSetup() async {
+    if (_licensePlateController.text.isEmpty ||
+        _manufacturerController.text.isEmpty ||
+        _colorController.text.isEmpty) {
+      TWSnackbar.showError(context, 'Please fill all required fields');
+      return;
+    }
+    
+    // In a real scenario, this is the path returned from image_picker.
+    // For now, we mock the path to a bundled asset or throw an error if missing.
+    // _photoPath = '/data/user/0/com.transitwallet/cache/image.jpg';
+
+    setState(() => _isLoading = true);
+
+    final result = await ref.read(driverRepositoryProvider).setupDriverVehicle(
+      vehicleType: _selectedVehicleType,
+      licensePlate: _licensePlateController.text,
+      manufacturer: _manufacturerController.text,
+      color: _colorController.text,
+      photoPath: _photoPath ?? 'mock_path', // Will fail if 'mock_path' doesn't exist, this is expected until image_picker is implemented
+    );
+
+    setState(() => _isLoading = false);
+
+    if (result['success'] == true) {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const DriverDocumentUploadScreen()),
+        );
+      }
+    } else {
+      TWSnackbar.showError(context, result['message'] ?? 'Vehicle setup failed');
+    }
+  }
 
   void _showImagePickerBottomSheet() {
     showModalBottomSheet(
@@ -205,31 +257,34 @@ class _DriverVehicleRegistrationScreenState extends State<DriverVehicleRegistrat
                       ],
                     ).animate().fade(delay: 300.ms).slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 20),
-                    const TWTextField(
+                    TWTextField(
+                      controller: _licensePlateController,
                       label: 'License Plate Number *',
                       hintText: 'EKO-588BA',
-                      prefixIcon: Icon(Icons.file_present_rounded),
+                      prefixIcon: const Icon(Icons.file_present_rounded),
                     ).animate().fade(delay: 400.ms).slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 20),
-                    const Row(
+                    Row(
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               TWTextField(
+                                controller: _manufacturerController,
                                 label: 'Vehicle Manufacturer *',
                                 hintText: 'Toyota',
                               ),
                             ],
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               TWTextField(
+                                controller: _colorController,
                                 label: 'Color *',
                                 hintText: 'Yellow/Black',
                               ),
@@ -286,15 +341,12 @@ class _DriverVehicleRegistrationScreenState extends State<DriverVehicleRegistrat
                 color: AppColors.ink,
                 border: Border(top: BorderSide(color: AppColors.borderStroke)),
               ),
-              child: TWButton(
-                label: 'Next: Document Upload',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const DriverDocumentUploadScreen()),
-                  );
-                },
-              ),
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : TWButton(
+                    label: 'Next: Document Upload',
+                    onPressed: _submitVehicleSetup,
+                  ),
             ).animate().slideY(begin: 1, end: 0, duration: 400.ms, delay: 700.ms, curve: Curves.easeOutCubic),
           ],
         ),

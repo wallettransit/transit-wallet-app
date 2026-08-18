@@ -40,29 +40,32 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
       extendBody: true,
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 24.0),
-          child: Container(
-            height: 64,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEEEEEE), // Light grey background
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+          padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 20.0), // Reduced bottom padding slightly
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+              child: Container(
+                height: 56, // Reduced height for sleeker look
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.65), // Apple Glass semi-transparent white
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.4),
+                    width: 1,
+                  ),
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(0, Icons.home_filled, Icons.home_outlined),
-                _buildNavItem(1, Icons.qr_code_scanner, Icons.qr_code_scanner),
-                _buildNavItem(2, Icons.history, Icons.history),
-                _buildNavItem(3, Icons.person, Icons.person_outline),
-              ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(0, Icons.home_filled, Icons.home_outlined),
+                    _buildNavItem(1, Icons.qr_code_scanner, Icons.qr_code_scanner),
+                    _buildNavItem(2, Icons.timeline, Icons.timeline),
+                    _buildNavItem(3, Icons.person, Icons.person_outline),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -105,14 +108,14 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Reduced vertical padding slightly to fit 56 height
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFD6D6D6) : Colors.transparent, // Darker grey pill for active
+          color: isSelected ? Colors.black.withOpacity(0.06) : Colors.transparent, // Very subtle dark pill for active
           borderRadius: BorderRadius.circular(24),
         ),
         child: Icon(
           isSelected ? activeIcon : inactiveIcon,
-          color: Colors.black87, // Black icons for both states
+          color: isSelected ? Colors.black87 : Colors.black54, // Mute inactive icons
           size: 26,
         ),
       ),

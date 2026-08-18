@@ -21,12 +21,21 @@ import '../../budget/presentation/passenger_budget_screen.dart';
 import '../../../core/components/tw_coming_soon_screen.dart';
 import 'offline_payment_qr_screen.dart';
 import '../../../../core/components/tw_updates_carousel.dart';
+import 'transaction_history_screen.dart';
+import 'package:shimmer/shimmer.dart';
 
-class PassengerWalletScreen extends ConsumerWidget {
+class PassengerWalletScreen extends ConsumerStatefulWidget {
   const PassengerWalletScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PassengerWalletScreen> createState() => _PassengerWalletScreenState();
+}
+
+class _PassengerWalletScreenState extends ConsumerState<PassengerWalletScreen> {
+  bool _isBalanceHidden = false;
+
+  @override
+  Widget build(BuildContext context) {
     final isOffline = ref.watch(offlineStateProvider);
     final currentUser = ref.watch(authRepositoryProvider).currentUser;
     final walletBalanceAsync = ref.watch(walletBalanceProvider);
@@ -51,9 +60,9 @@ class PassengerWalletScreen extends ConsumerWidget {
         bottom: false,
         child: Column(
           children: [
-            // Top Bar
+            // 1. Sleek Welcome Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -69,278 +78,334 @@ class PassengerWalletScreen extends ConsumerWidget {
                         Stack(
                           alignment: Alignment.center,
                           children: [
-                            SizedBox(
-                              width: 38,
-                              height: 38,
-                              child: CircularProgressIndicator(
-                                value: 0.6,
-                                color: AppColors.kekeGreen,
-                                backgroundColor: AppColors.kekeGreen.withOpacity(0.2),
-                                strokeWidth: 2,
-                              ),
-                            ),
                             Container(
-                              width: 32,
-                              height: 32,
-                              decoration: const BoxDecoration(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: [AppColors.kekeGreen.withOpacity(0.6), AppColors.kekeGreen.withOpacity(0.0)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                            ).animate(onPlay: (controller) => controller.repeat()).shimmer(duration: 3000.ms, color: Colors.white24),
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
                                 color: AppColors.danfoYellow,
                                 shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.ink, width: 2),
                               ),
                               alignment: Alignment.center,
-                              child: Text(initials, style: AppTypography.label.copyWith(color: AppColors.ink, fontWeight: FontWeight.bold)),
+                              child: Text(initials, style: AppTypography.bodyMedium.copyWith(color: AppColors.ink, fontWeight: FontWeight.w900)),
                             ),
                           ],
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 14),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Welcome back', style: AppTypography.bodySmall.copyWith(color: AppColors.muted)),
-                            Text(fullName, style: AppTypography.bodyMedium.copyWith(color: AppColors.paper, fontWeight: FontWeight.bold)),
+                            Text('Good morning,', style: AppTypography.label.copyWith(color: AppColors.muted)),
+                            Text(fullName, style: AppTypography.bodyLarge.copyWith(color: AppColors.paper, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  TWLogo(size: 16, textColor: AppColors.paper),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackground,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: const Icon(Icons.notifications_none, color: AppColors.paper, size: 20),
+                  ),
                 ],
               ),
-            ).animate().fade().slideY(begin: -0.2, end: 0),
+            ).animate().fade(duration: 400.ms).slideY(begin: -0.1, end: 0, curve: Curves.easeOutCubic),
             
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Balance Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.kekeGreen, Color(0xFF00E676)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+              child: RefreshIndicator(
+                color: AppColors.kekeGreen,
+                backgroundColor: AppColors.cardBackground,
+                onRefresh: () async {
+                  ref.invalidate(walletBalanceProvider);
+                  ref.invalidate(recentRidesProvider);
+                  await Future.delayed(const Duration(milliseconds: 800));
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // 2. Glassmorphism Wallet Balance Card
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(28),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0F3A26), Color(0xFF071F13)], // Deep elegant emerald to dark forest
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(color: const Color(0xFF0F3A26).withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 12)),
+                          ],
+                          border: Border.all(color: AppColors.kekeGreen.withOpacity(0.2), width: 1),
                         ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.kekeGreen.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  'YOUR WALLET BALANCE',
-                                  style: AppTypography.label.copyWith(color: AppColors.ink, fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.kekeGreen.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(Icons.account_balance_wallet, color: AppColors.kekeGreen, size: 14),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text('TRANSIT CASH', style: AppTypography.label.copyWith(color: AppColors.kekeGreen, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text('Transit Cash', style: AppTypography.label.copyWith(color: AppColors.ink, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text('₦', style: AppTypography.heading1.copyWith(color: AppColors.ink, fontSize: 24)),
-                              const SizedBox(width: 4),
-                              walletBalanceAsync.when(
-                                data: (balance) => Text(
-                                  balance.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'),
-                                  style: AppTypography.heading1.copyWith(color: AppColors.ink, fontSize: 36, fontWeight: FontWeight.w800),
-                                ),
-                                loading: () => const SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: CircularProgressIndicator(color: AppColors.ink, strokeWidth: 3),
-                                ),
-                                error: (_, __) => Text('---', style: AppTypography.heading1.copyWith(color: AppColors.ink, fontSize: 36, fontWeight: FontWeight.w800)),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildActionButton(
-                                  icon: Icons.account_balance_wallet,
-                                  label: 'Top Up',
-                                  color: AppColors.kekeGreen,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => const PassengerTopUpScreen()),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildActionButton(
-                                  icon: Icons.qr_code_scanner,
-                                  label: 'Scan to Pay',
-                                  color: AppColors.danfoYellow,
-                                  onTap: () {
-                                    if (isOffline) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => const OfflinePaymentQrScreen()),
-                                      );
-                                    } else {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => const PassengerQrScanScreen()),
-                                      );
-                                    }
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ).animate().fade(delay: 100.ms).slideY(begin: 0.1, end: 0),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Quick Actions
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.ink,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildFeatureCard('Group', Icons.people, AppColors.danfoYellow, () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const PassengerGroupRideHomeScreen()),
-                              );
-                            }),
-                          ),
-                          Expanded(
-                            child: _buildFeatureCard('Book', Icons.menu_book, AppColors.kekeGreen, () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const TWComingSoonScreen(
-                                    title: 'Book a Ride',
-                                    featureName: 'ride booking',
-                                    icon: Icons.menu_book,
+                                GestureDetector(
+                                  onTap: () => setState(() => _isBalanceHidden = !_isBalanceHidden),
+                                  child: Icon(
+                                    _isBalanceHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                    color: Colors.white54,
+                                    size: 20,
                                   ),
                                 ),
-                              );
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6.0),
+                                  child: Text('₦', style: AppTypography.heading2.copyWith(color: Colors.white70)),
+                                ),
+                                const SizedBox(width: 6),
+                                walletBalanceAsync.when(
+                                  data: (balance) {
+                                    if (_isBalanceHidden) {
+                                      return Text('••••', style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900));
+                                    }
+                                    return Text(
+                                      balance.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'),
+                                      style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900, letterSpacing: -1.5),
+                                    );
+                                  },
+                                  loading: () => Shimmer.fromColors(
+                                    baseColor: Colors.white12,
+                                    highlightColor: Colors.white24,
+                                    child: Container(
+                                      height: 48,
+                                      width: 140,
+                                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                  ),
+                                  error: (_, __) => Text('---', style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 32),
+                            // Floating Frosted Pill Buttons inside the card
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildActionButton(
+                                    icon: Icons.add,
+                                    label: 'Top Up',
+                                    bgColor: AppColors.kekeGreen,
+                                    textColor: AppColors.ink,
+                                    onTap: () {
+                                      Navigator.push(context, MaterialPageRoute(builder: (context) => const PassengerTopUpScreen()));
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildActionButton(
+                                    icon: Icons.qr_code_scanner,
+                                    label: 'Scan to Pay',
+                                    bgColor: Colors.white.withOpacity(0.1),
+                                    textColor: Colors.white,
+                                    border: Border.all(color: Colors.white24),
+                                    onTap: () {
+                                      if (isOffline) {
+                                        Navigator.push(context, MaterialPageRoute(builder: (context) => const OfflinePaymentQrScreen()));
+                                      } else {
+                                        Navigator.push(context, MaterialPageRoute(builder: (context) => const PassengerQrScanScreen()));
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ).animate().fade(delay: 100.ms, duration: 500.ms).scale(begin: const Offset(0.95, 0.95), curve: Curves.easeOutBack),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // 3. Quick Actions Grid
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildFeatureCard('Group', Icons.people, const Color(0xFFFACC15), const Color(0xFF422006), () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const PassengerGroupRideHomeScreen()));
                             }),
                           ),
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: _buildFeatureCard('Transfer', Icons.send, AppColors.paper, () {
+                            child: _buildFeatureCard('Transfer', Icons.send, const Color(0xFF60A5FA), const Color(0xFF172554), () {
                               TWTransferBottomSheet.show(context);
                             }),
                           ),
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: _buildFeatureCard('Budget', Icons.account_balance_wallet, AppColors.paper, () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const PassengerBudgetScreen()),
-                              );
+                            child: _buildFeatureCard('History', Icons.history, const Color(0xFF34D399), const Color(0xFF022C22), () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const TransactionHistoryScreen()));
+                            }),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildFeatureCard('Budget', Icons.pie_chart, const Color(0xFFA78BFA), const Color(0xFF2E1065), () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const PassengerBudgetScreen()));
                             }),
                           ),
                         ],
-                      ),
-                    ).animate().fade(delay: 150.ms).slideY(begin: 0.1, end: 0),
+                      ).animate().fade(delay: 200.ms, duration: 500.ms).slideY(begin: 0.1, curve: Curves.easeOutQuart),
 
-                    const SizedBox(height: 32),
-                    
-                    TWUpdatesCarousel(promos: PromoData.passengerPromos).animate().fade(delay: 180.ms).slideX(begin: 0.1, end: 0),
+                      const SizedBox(height: 32),
+                      
+                      TWUpdatesCarousel(promos: PromoData.passengerPromos).animate().fade(delay: 300.ms, duration: 500.ms).slideX(begin: 0.1, curve: Curves.easeOutQuart),
 
-                    const SizedBox(height: 24),
-                    
-                    // Recent Rides
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Recent Rides', style: AppTypography.bodyMedium.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold)),
-                        Text('View All', style: AppTypography.bodySmall.copyWith(color: AppColors.kekeGreen, fontWeight: FontWeight.bold)),
-                      ],
-                    ).animate().fade(delay: 200.ms),
-                    
-                    const SizedBox(height: 12),
-                    
-                    recentRidesAsync.when(
-                      data: (rides) {
-                        if (rides.isEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32),
-                            child: Center(
-                              child: Text('No recent rides', style: AppTypography.bodyMedium.copyWith(color: AppColors.muted)),
+                      const SizedBox(height: 32),
+                      
+                      // 4. Recent Rides
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('Recent Rides', style: AppTypography.heading3.copyWith(color: AppColors.paper)),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const PassengerRideHistoryScreen()));
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardBackground,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text('View All', style: AppTypography.label.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold)),
                             ),
+                          ),
+                        ],
+                      ).animate().fade(delay: 400.ms, duration: 400.ms),
+                      
+                      const SizedBox(height: 16),
+                      
+                      recentRidesAsync.when(
+                        data: (rides) {
+                          if (rides.isEmpty) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(vertical: 40),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardBackground.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: Colors.white10),
+                              ),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: const BoxDecoration(color: AppColors.ink, shape: BoxShape.circle),
+                                    child: const Icon(Icons.directions_car_outlined, color: Colors.white38, size: 32),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text('No rides yet', style: AppTypography.bodyMedium.copyWith(color: Colors.white54, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 4),
+                                  Text('Scan a QR code to start a ride.', style: AppTypography.label.copyWith(color: Colors.white38)),
+                                ],
+                              ),
+                            );
+                          }
+                          return Column(
+                            children: rides.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final ride = entry.value;
+                              return _buildRideItem(
+                                '${ride['start_location'] ?? 'Unknown'} → ${ride['end_location'] ?? 'Unknown'}',
+                                'Recently',
+                                '₦${ride['fare']}',
+                              ).animate().fade(delay: (450 + (index * 100)).ms, duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuart);
+                            }).toList(),
                           );
-                        }
-                        return Column(
-                          children: rides.map((ride) => _buildRideItem(
-                            '${ride['start_location'] ?? 'Unknown'} → ${ride['end_location'] ?? 'Unknown'}',
-                            'Recently',
-                            '₦${ride['fare']}',
-                          )).toList(),
-                        ).animate().fade(delay: 300.ms).slideX(begin: 0.1, end: 0);
-                      },
-                      loading: () => const Padding(
-                        padding: EdgeInsets.all(32),
-                        child: Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
+                        },
+                        loading: () => Column(
+                          children: List.generate(3, (index) => 
+                            Shimmer.fromColors(
+                              baseColor: AppColors.cardBackground,
+                              highlightColor: AppColors.cardBackground.withOpacity(0.5),
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: AppColors.cardBackground,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                            )
+                          ),
+                        ).animate().fade(delay: 400.ms),
+                        error: (err, _) => Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text('Failed to load rides', style: AppTypography.bodySmall.copyWith(color: Colors.redAccent)),
+                        ),
                       ),
-                      error: (err, _) => Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text('Failed to load rides', style: AppTypography.bodySmall.copyWith(color: Colors.red)),
-                      ),
-                    ),
-                    
-                  ],
+                      
+                    ],
+                  ),
                 ),
               ),
             ),
             
-            const SizedBox(height: 80), // Spacer for floating bottom nav
+            const SizedBox(height: 90), // Spacer for floating bottom nav
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+  Widget _buildActionButton({required IconData icon, required String label, required Color bgColor, required Color textColor, BoxBorder? border, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.ink.withOpacity(0.9),
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
+          border: border,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 18, color: AppColors.paper),
+            Icon(icon, size: 18, color: textColor),
             const SizedBox(width: 8),
-            Text(label, style: AppTypography.label.copyWith(color: AppColors.paper, fontWeight: FontWeight.bold)),
+            Text(label, style: AppTypography.label.copyWith(color: textColor, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -349,86 +414,64 @@ class PassengerWalletScreen extends ConsumerWidget {
 
   Widget _buildRideItem(String route, String time, String amount) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: AppColors.kekeGreen,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.directions_bus, size: 14, color: AppColors.ink),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(route, style: AppTypography.bodySmall.copyWith(color: AppColors.paper, fontWeight: FontWeight.bold)),
-                  Text(time, style: AppTypography.label.copyWith(color: AppColors.muted)),
-                ],
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.ink,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white10),
+            ),
+            child: const Icon(Icons.location_on, size: 16, color: AppColors.danfoYellow),
           ),
-          Row(
-            children: [
-              Text(amount, style: AppTypography.bodyMedium.copyWith(color: AppColors.paper, fontWeight: FontWeight.w800)),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  // Re-ride action
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.kekeGreen.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.kekeGreen.withOpacity(0.5)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.replay, size: 12, color: AppColors.kekeGreen),
-                      const SizedBox(width: 4),
-                      Text('Ride Again', style: AppTypography.label.copyWith(color: AppColors.kekeGreen, fontSize: 10, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(route, style: AppTypography.bodySmall.copyWith(color: AppColors.paper, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text(time, style: AppTypography.label.copyWith(color: AppColors.muted)),
+              ],
+            ),
           ),
+          const SizedBox(width: 12),
+          Text(amount, style: AppTypography.bodyLarge.copyWith(color: AppColors.kekeGreen, fontWeight: FontWeight.w900)),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureCard(String label, IconData icon, Color iconColor, VoidCallback onTap) {
+  Widget _buildFeatureCard(String label, IconData icon, Color iconColor, Color bgColor, VoidCallback onTap) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Column(
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
-              color: AppColors.highlightBackground,
-              borderRadius: BorderRadius.circular(18),
+              color: bgColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: iconColor.withOpacity(0.2)),
             ),
-            child: Icon(icon, color: iconColor == AppColors.paper ? AppColors.paper : iconColor, size: 24),
+            child: Icon(icon, color: iconColor, size: 28),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             label, 
-            style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600, color: AppColors.paper),
+            style: AppTypography.label.copyWith(fontWeight: FontWeight.bold, color: AppColors.paper),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

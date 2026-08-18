@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:local_auth/local_auth.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/components/tw_button.dart';
 import '../../../../core/components/tw_text_field.dart';
 import '../../../../core/components/tw_logo.dart';
+import '../../../../core/services/secure_storage_service.dart';
 import '../providers/auth_provider.dart';
 import 'passenger_registration_screen.dart';
 import 'forgot_password_screen.dart';
@@ -27,6 +29,47 @@ class _PassengerLoginScreenState extends ConsumerState<PassengerLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+
+  final LocalAuthentication _localAuth = LocalAuthentication();
+  bool _canCheckBiometrics = false;
+  Map<String, String>? _savedCredentials;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometrics();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final credentials = await SecureStorageService.getCredentials();
+    if (credentials != null) {
+      final canCheck = await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
+      setState(() {
+        _savedCredentials = credentials;
+        _canCheckBiometrics = canCheck;
+      });
+    }
+  }
+
+  Future<void> _authenticateWithBiometrics() async {
+    if (_savedCredentials == null) return;
+    try {
+      final didAuthenticate = await _localAuth.authenticate(
+        localizedReason: 'Log in securely with biometrics',
+        options: const AuthenticationOptions(stickyAuth: true),
+      );
+
+      if (didAuthenticate) {
+        _emailController.text = _savedCredentials!['email']!;
+        _passwordController.text = _savedCredentials!['password']!;
+        _submitForm();
+      }
+    } catch (e) {
+      if (mounted) {
+        TWSnackbar.showError(context, 'Biometric authentication failed or canceled.');
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -214,11 +257,33 @@ class _PassengerLoginScreenState extends ConsumerState<PassengerLoginScreen> {
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  TWButton(
-                    label: 'Log In',
-                    onPressed: isLoading ? () {} : _submitForm,
-                    isLoading: isLoading,
-                  ).animate(onPlay: (controller) => controller.repeat(reverse: true)).shimmer(duration: 2000.ms, color: Colors.white24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TWButton(
+                          label: 'Log In',
+                          onPressed: isLoading ? () {} : _submitForm,
+                          isLoading: isLoading,
+                        ).animate(onPlay: (controller) => controller.repeat(reverse: true)).shimmer(duration: 2000.ms, color: Colors.white24),
+                      ),
+                      if (_canCheckBiometrics) ...[
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: isLoading ? null : _authenticateWithBiometrics,
+                          child: Container(
+                            height: 56, // Matches TWButton default height roughly
+                            width: 56,
+                            decoration: BoxDecoration(
+                              color: AppColors.kekeGreen.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.kekeGreen.withOpacity(0.3)),
+                            ),
+                            child: const Icon(Icons.fingerprint, color: AppColors.kekeGreen, size: 28),
+                          ),
+                        ).animate().fade().scale(),
+                      ]
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

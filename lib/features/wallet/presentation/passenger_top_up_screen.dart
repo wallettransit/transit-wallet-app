@@ -3,6 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/components/tw_button.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:app_links/app_links.dart';
+import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -18,11 +21,214 @@ class PassengerTopUpScreen extends ConsumerStatefulWidget {
   ConsumerState<PassengerTopUpScreen> createState() => _PassengerTopUpScreenState();
 }
 
-class _PassengerTopUpScreenState extends ConsumerState<PassengerTopUpScreen> {
+class _PassengerTopUpScreenState extends ConsumerState<PassengerTopUpScreen> with WidgetsBindingObserver {
   final TextEditingController _amountController = TextEditingController(text: '2000');
   int _selectedMethodIndex = 0;
   
   final List<int> _presets = [500, 1000, 2000, 5000];
+  
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+  String? _pendingReference;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initDeepLinks();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _pendingReference != null) {
+      _verifyPendingPayment();
+    }
+  }
+
+  void _verifyPendingPayment() async {
+    final reference = _pendingReference;
+    _pendingReference = null; // Clear it so we don't verify twice
+
+    // Add a slight delay to allow the browser's network stack to fully wake up on resume
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (reference != null && mounted) {
+      final repo = ref.read(walletRepositoryProvider);
+      final user = ref.read(authRepositoryProvider).currentUser;
+      if (user != null) {
+        final res = await repo.verifyTopup(user.id, reference);
+        if (mounted) {
+          if (res['success'] == true) {
+            _showSuccessBottomSheet();
+            ref.invalidate(walletBalanceProvider);
+            ref.invalidate(transactionHistoryProvider);
+          } else {
+            if (res['message'] == 'Payment not successful or not found') {
+               _showFailedBottomSheet('Payment was declined or cancelled.');
+            } else {
+               _showFailedBottomSheet(res['message'] ?? 'Payment verification failed');
+            }
+          }
+        }
+      }
+    }
+  }
+
+  void _showFailedBottomSheet(String message) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: AppColors.ink,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Payment Failed',
+              style: AppTypography.heading2.copyWith(color: AppColors.paper),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.muted),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Dismiss bottom sheet
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cardBackground,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Text('Try Again', style: AppTypography.bodyLarge.copyWith(color: AppColors.paper, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _initDeepLinks() {
+    _appLinks = AppLinks();
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
+      final isHttpsMatch = uri.host == 'transitwallet.app' && uri.path.contains('/topup/callback');
+      final isCustomSchemeMatch = uri.scheme == 'transitwallet' && uri.host == 'payment' && uri.path.contains('/callback');
+      
+      if (isHttpsMatch || isCustomSchemeMatch) {
+        final reference = uri.queryParameters['reference'];
+        if (reference != null && mounted) {
+          final repo = ref.read(walletRepositoryProvider);
+          final user = ref.read(authRepositoryProvider).currentUser;
+          if (user != null) {
+            final res = await repo.verifyTopup(user.id, reference);
+            if (mounted) {
+              if (res['success'] == true) {
+                _showSuccessBottomSheet();
+                ref.invalidate(walletBalanceProvider);
+                ref.invalidate(transactionHistoryProvider);
+              } else {
+                TWSnackbar.showError(context, res['message'] ?? 'Payment verification failed');
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  void _showSuccessBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(32),
+              topRight: Radius.circular(32),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.kekeGreen.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle, color: AppColors.kekeGreen, size: 80),
+              ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack),
+              
+              const SizedBox(height: 24),
+              
+              Text(
+                'Top-Up Successful!',
+                style: AppTypography.heading2.copyWith(color: AppColors.paper),
+                textAlign: TextAlign.center,
+              ).animate().fade(delay: 400.ms).slideY(begin: 0.2, end: 0),
+              
+              const SizedBox(height: 12),
+              
+              Text(
+                'Your wallet has been credited with ₦${_amountController.text}.',
+                style: AppTypography.bodyMedium.copyWith(color: AppColors.muted),
+                textAlign: TextAlign.center,
+              ).animate().fade(delay: 500.ms).slideY(begin: 0.2, end: 0),
+              
+              const SizedBox(height: 40),
+              
+              SafeArea(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: TWButton(
+                    label: 'Done',
+                    onPressed: () {
+                      Navigator.pop(context); // close bottom sheet
+                      Navigator.pop(context); // pop back to wallet screen
+                    },
+                  ),
+                ).animate().fade(delay: 600.ms).slideY(begin: 0.2, end: 0),
+              ),
+            ],
+          ),
+        ).animate().slideY(begin: 1.0, end: 0.0, curve: Curves.easeOutQuart);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _linkSubscription?.cancel();
+    _amountController.dispose();
+    super.dispose();
+  }
 
   void _selectPreset(int amount) {
     setState(() {
@@ -63,9 +269,17 @@ class _PassengerTopUpScreenState extends ConsumerState<PassengerTopUpScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (res['success'] == true) {
-        ref.invalidate(walletBalanceProvider);
-        TWSnackbar.showSuccess(context, 'Funded ₦${_amountController.text} successfully!');
-        Navigator.pop(context);
+        final checkoutUrl = res['checkout_url'];
+        if (checkoutUrl != null) {
+          _pendingReference = res['reference']; // Save reference to verify on resume
+          final uri = Uri.parse(checkoutUrl);
+          try {
+            await launchUrl(uri, mode: LaunchMode.inAppWebView);
+          } catch (e) {
+            TWSnackbar.showError(context, 'Could not open payment link');
+          }
+        }
+        // Do not pop here! The screen must remain active to receive the Deep Link callback or verify on resume!
       } else {
         TWSnackbar.showError(context, res['message'] ?? 'Funding failed');
       }

@@ -42,14 +42,21 @@ class PassengerMeScreen extends ConsumerWidget {
                   
                   return Row(
                     children: [
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundColor: AppColors.kekeGreen.withOpacity(0.2),
-                        child: Text(
-                          userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U',
-                          style: AppTypography.heading1.copyWith(color: AppColors.kekeGreen),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.kekeGreen.withOpacity(0.5), width: 2),
                         ),
-                      ),
+                        child: CircleAvatar(
+                          radius: 32,
+                          backgroundColor: AppColors.kekeGreen.withOpacity(0.2),
+                          child: Text(
+                            userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U',
+                            style: GoogleFonts.spaceGrotesk(color: AppColors.kekeGreen, fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ).animate(onPlay: (controller) => controller.repeat(reverse: true)).scaleXY(end: 1.05, duration: 2.seconds),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
@@ -57,7 +64,9 @@ class PassengerMeScreen extends ConsumerWidget {
                           children: [
                             Text(
                               userName,
-                              style: AppTypography.heading2.copyWith(color: AppColors.paper),
+                              style: GoogleFonts.spaceGrotesk(color: AppColors.paper, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -70,13 +79,13 @@ class PassengerMeScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.danfoYellow.withOpacity(0.2),
+                          color: AppColors.danfoYellow.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.danfoYellow.withOpacity(0.5)),
+                          border: Border.all(color: AppColors.danfoYellow.withOpacity(0.4)),
                         ),
                         child: Text(
                           kycTier,
-                          style: AppTypography.label.copyWith(color: AppColors.danfoYellow),
+                          style: AppTypography.label.copyWith(color: AppColors.danfoYellow, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -88,30 +97,37 @@ class PassengerMeScreen extends ConsumerWidget {
               
               const SizedBox(height: 32),
               
-              // Ride Stats
+              // Ride Stats Board (Glassmorphic)
               statsAsync.when(
                 data: (stats) {
                   final totalRides = stats?['total_rides']?.toString() ?? '0';
-                  final totalSpentKobo = stats?['total_spent_kobo'] ?? 0;
+                  final totalSpentKobo = double.tryParse(stats?['total_spent_kobo']?.toString() ?? '0') ?? 0;
                   final uniqueRoutes = stats?['unique_routes']?.toString() ?? '0';
                   
                   final spentFormatted = NumberFormat.compact().format(totalSpentKobo / 100);
                   
                   return Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: AppColors.cardBackground,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      borderRadius: BorderRadius.circular(28),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0F3A26), Color(0xFF071F13)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(color: const Color(0xFF0F3A26).withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 12)),
+                      ],
+                      border: Border.all(color: AppColors.kekeGreen.withOpacity(0.2), width: 1),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildStatItem('Rides', totalRides),
-                        Container(height: 40, width: 1, color: Colors.white.withOpacity(0.1)),
-                        _buildStatItem('Total Spent', '₦$spentFormatted'),
-                        Container(height: 40, width: 1, color: Colors.white.withOpacity(0.1)),
-                        _buildStatItem('Routes', uniqueRoutes),
+                        _buildStatItem('RIDES', totalRides, Colors.white70),
+                        Container(height: 40, width: 1, color: Colors.white10),
+                        _buildStatItem('TOTAL SPENT', '₦$spentFormatted', Colors.white),
+                        Container(height: 40, width: 1, color: Colors.white10),
+                        _buildStatItem('ROUTES', uniqueRoutes, AppColors.kekeGreen),
                       ],
                     ),
                   ).animate().fade(delay: 200.ms).slideY(begin: 0.1, end: 0);
@@ -120,91 +136,98 @@ class PassengerMeScreen extends ConsumerWidget {
                   height: 100,
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(28),
                   ),
                   child: const Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
                 ),
                 error: (_, __) => const SizedBox.shrink(),
               ),
               
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
               
               Text(
                 'Account',
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
+                style: AppTypography.label.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ).animate().fade(delay: 300.ms),
+              const SizedBox(height: 12),
               _buildSettingsCard([
-                _buildListTile(Icons.credit_card, 'Saved Payment Methods', trailing: const Icon(Icons.chevron_right, color: Colors.white54)),
+                _buildListTile(Icons.credit_card, AppColors.kekeGreen, 'Saved Payment Methods', trailing: const Icon(Icons.chevron_right, color: Colors.white24)),
+                Divider(height: 1, color: Colors.white.withOpacity(0.05), indent: 64, endIndent: 16),
                 _buildListTile(
                   Icons.verified_user_outlined, 
+                  Colors.blueAccent,
                   'KYC Verification', 
                   subtitle: 'Upgrade to Tier 2', 
-                  trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.white24),
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PassengerKycScreen())),
                 ),
-              ]).animate().fade(delay: 300.ms).slideY(begin: 0.1, end: 0),
+              ]).animate().fade(delay: 350.ms).slideY(begin: 0.1, end: 0),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               
               Text(
                 'Security',
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
+                style: AppTypography.label.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ).animate().fade(delay: 450.ms),
+              const SizedBox(height: 12),
               _buildSettingsCard([
-                _buildListTile(Icons.fingerprint, 'Require Biometrics', trailing: Switch(value: true, onChanged: (v) {}, activeColor: AppColors.kekeGreen)),
-                _buildListTile(Icons.pin_outlined, 'Change PIN', trailing: const Icon(Icons.chevron_right, color: Colors.white54)),
-              ]).animate().fade(delay: 400.ms).slideY(begin: 0.1, end: 0),
-              
-              const SizedBox(height: 24),
-              
-              Text(
-                'More',
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              _buildSettingsCard([
-                _buildListTile(
-                  Icons.card_giftcard, 
-                  'Refer a Friend', 
-                  subtitle: 'Earn ₦500 for every friend', 
-                  iconColor: AppColors.danfoYellow,
-                  trailing: const Icon(Icons.chevron_right, color: Colors.white54)
-                ),
-                _buildListTile(Icons.help_outline, 'Help & Support', trailing: const Icon(Icons.chevron_right, color: Colors.white54)),
+                _buildListTile(Icons.fingerprint, Colors.orangeAccent, 'Require Biometrics', trailing: Switch(value: true, onChanged: (v) {}, activeColor: AppColors.kekeGreen, activeTrackColor: AppColors.kekeGreen.withOpacity(0.2), inactiveTrackColor: Colors.white10, inactiveThumbColor: Colors.white54)),
+                Divider(height: 1, color: Colors.white.withOpacity(0.05), indent: 64, endIndent: 16),
+                _buildListTile(Icons.pin_outlined, Colors.purpleAccent, 'Change PIN', trailing: const Icon(Icons.chevron_right, color: Colors.white24)),
               ]).animate().fade(delay: 500.ms).slideY(begin: 0.1, end: 0),
               
               const SizedBox(height: 32),
               
-              // Logout Button
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: () {
-                    // Log out using provider
+              Text(
+                'More',
+                style: AppTypography.label.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ).animate().fade(delay: 600.ms),
+              const SizedBox(height: 12),
+              _buildSettingsCard([
+                _buildListTile(
+                  Icons.card_giftcard, 
+                  AppColors.danfoYellow,
+                  'Refer a Friend', 
+                  subtitle: 'Earn ₦500 for every friend', 
+                  trailing: const Icon(Icons.chevron_right, color: Colors.white24)
+                ),
+                Divider(height: 1, color: Colors.white.withOpacity(0.05), indent: 64, endIndent: 16),
+                _buildListTile(Icons.help_outline, Colors.cyan, 'Help & Support', trailing: const Icon(Icons.chevron_right, color: Colors.white24)),
+              ]).animate().fade(delay: 650.ms).slideY(begin: 0.1, end: 0),
+              
+              const SizedBox(height: 48),
+              
+              // Premium Logout Button
+              Center(
+                child: GestureDetector(
+                  onTap: () {
                     ref.read(authControllerProvider.notifier).signOut();
-                    // Navigator routing is handled by the wrapper/AppLockScreen if needed,
-                    // but we can manually push replacement to WelcomeScreen here to be safe.
-                    // (Assuming you have a WelcomeScreen route).
                   },
-                  icon: const Icon(Icons.logout, color: AppColors.errorRed),
-                  label: Text(
-                    'Log Out',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.errorRed,
-                      fontWeight: FontWeight.bold,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
                     ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: AppColors.errorRed.withOpacity(0.1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Log Out Securely',
+                          style: GoogleFonts.outfit(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ).animate().fade(delay: 600.ms).slideY(begin: 0.1, end: 0),
+              ).animate().fade(delay: 800.ms).slideY(begin: 0.1, end: 0),
             ],
           ),
         ),
@@ -212,17 +235,17 @@ class PassengerMeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
+  Widget _buildStatItem(String label, String value, Color valueColor) {
     return Column(
       children: [
         Text(
           value,
-          style: AppTypography.heading2.copyWith(color: AppColors.paper),
+          style: GoogleFonts.spaceGrotesk(color: valueColor, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Text(
           label,
-          style: AppTypography.label.copyWith(color: AppColors.muted),
+          style: AppTypography.label.copyWith(color: AppColors.kekeGreen.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
         ),
       ],
     );
@@ -232,7 +255,7 @@ class PassengerMeScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
@@ -241,27 +264,30 @@ class PassengerMeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildListTile(IconData icon, String title, {String? subtitle, Widget? trailing, Color? iconColor, VoidCallback? onTap}) {
+  Widget _buildListTile(IconData icon, Color iconBg, String title, {String? subtitle, Widget? trailing, VoidCallback? onTap}) {
     return ListTile(
       onTap: onTap,
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: (iconColor ?? AppColors.paper).withOpacity(0.1),
+          color: iconBg.withOpacity(0.15),
           shape: BoxShape.circle,
+          border: Border.all(color: iconBg.withOpacity(0.3)),
         ),
-        child: Icon(icon, color: iconColor ?? AppColors.paper, size: 20),
+        child: Icon(icon, color: iconBg, size: 20),
       ),
       title: Text(
         title,
-        style: AppTypography.bodyMedium.copyWith(color: AppColors.paper, fontWeight: FontWeight.w600),
+        style: GoogleFonts.outfit(color: AppColors.paper, fontSize: 14, fontWeight: FontWeight.w600),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
       subtitle: subtitle != null ? Text(
         subtitle,
         style: AppTypography.label.copyWith(color: AppColors.muted),
       ) : null,
       trailing: trailing,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
     );
   }
 }

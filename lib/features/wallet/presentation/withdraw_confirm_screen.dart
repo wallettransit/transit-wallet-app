@@ -6,7 +6,12 @@ import '../../../../core/components/tw_button.dart';
 import '../../../../core/components/tw_bank_account_card.dart';
 import 'withdraw_success_screen.dart';
 
-class WithdrawConfirmScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../data/wallet_repository.dart';
+import '../../../../core/components/tw_snackbar.dart';
+
+class WithdrawConfirmScreen extends ConsumerStatefulWidget {
   final double amount;
   final String bankName;
   final String accountNumber;
@@ -21,27 +26,47 @@ class WithdrawConfirmScreen extends StatefulWidget {
   });
 
   @override
-  State<WithdrawConfirmScreen> createState() => _WithdrawConfirmScreenState();
+  ConsumerState<WithdrawConfirmScreen> createState() => _WithdrawConfirmScreenState();
 }
 
-class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
+class _WithdrawConfirmScreenState extends ConsumerState<WithdrawConfirmScreen> {
   bool _isProcessing = false;
 
-  void _processWithdrawal() {
+  void _processWithdrawal() async {
     setState(() => _isProcessing = true);
     
-    // Mock processing delay
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() => _isProcessing = false);
+    final user = ref.read(authRepositoryProvider).currentUser;
+    if (user == null) {
+      setState(() => _isProcessing = false);
+      return;
+    }
+
+    // Default to '011' First Bank or similar if bank code is not passed directly (assuming it's passed or mocked for now)
+    // Note: The UI currently just passes bankName, not bankCode. Using a mock code '058' (GTB) for integration test.
+    final repo = ref.read(walletRepositoryProvider);
+    final res = await repo.requestDriverPayout(
+      userId: user.id,
+      amount: widget.amount,
+      accountNumber: widget.accountNumber,
+      bankCode: '058', // Mocking GTB code until Bank Selection UI passes it down
+      accountName: widget.accountName,
+    );
+
+    if (mounted) {
+      setState(() => _isProcessing = false);
+      
+      if (res['success'] == true) {
+        ref.invalidate(walletBalanceProvider);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => WithdrawSuccessScreen(amount: widget.amount),
           ),
         );
+      } else {
+        TWSnackbar.showError(context, res['message'] ?? 'Withdrawal failed');
       }
-    });
+    }
   }
 
   @override

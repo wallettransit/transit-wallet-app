@@ -4,10 +4,54 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/components/tw_button.dart';
 import '../../../../core/components/tw_document_upload_tile.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../driver/data/driver_repository.dart';
+import '../../../../core/components/tw_snackbar.dart';
 import 'driver_onboarding_verification_screen.dart';
 
-class DriverDocumentUploadScreen extends StatelessWidget {
+class DriverDocumentUploadScreen extends ConsumerStatefulWidget {
   const DriverDocumentUploadScreen({super.key});
+
+  @override
+  ConsumerState<DriverDocumentUploadScreen> createState() => _DriverDocumentUploadScreenState();
+}
+
+class _DriverDocumentUploadScreenState extends ConsumerState<DriverDocumentUploadScreen> {
+  final Map<String, String> _uploadedDocs = {};
+  bool _isLoading = false;
+
+  void _handleDocUpload(String docType) {
+    // Mocking file picker
+    setState(() {
+      _uploadedDocs[docType] = 'mock_path_for_$docType.jpg';
+    });
+  }
+
+  void _submitDocuments() async {
+    if (_uploadedDocs.length < 4) {
+      TWSnackbar.showError(context, 'Please upload all 4 required documents.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await ref.read(driverRepositoryProvider).uploadDriverDocuments(
+      documents: _uploadedDocs,
+    );
+
+    setState(() => _isLoading = false);
+
+    if (result['success'] == true) {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const DriverOnboardingVerificationScreen()),
+        );
+      }
+    } else {
+      TWSnackbar.showError(context, result['message'] ?? 'Upload failed');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,33 +135,33 @@ class DriverDocumentUploadScreen extends StatelessWidget {
                     
                     TWDocumentUploadTile(
                       label: 'Driver\'s License',
-                      status: DocumentStatus.uploaded,
+                      status: _uploadedDocs.containsKey('drivers_license') ? DocumentStatus.uploaded : DocumentStatus.pending,
                       documentIcon: Icons.badge_outlined,
-                      onTap: () {},
+                      onTap: () => _handleDocUpload('drivers_license'),
                     ).animate().fade(delay: 400.ms).slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 16),
                     
                     TWDocumentUploadTile(
                       label: 'Vehicle Papers (LASG / State)',
-                      status: DocumentStatus.underReview,
+                      status: _uploadedDocs.containsKey('vehicle_papers') ? DocumentStatus.uploaded : DocumentStatus.pending,
                       documentIcon: Icons.description_outlined,
-                      onTap: () {},
+                      onTap: () => _handleDocUpload('vehicle_papers'),
                     ).animate().fade(delay: 500.ms).slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 16),
                     
                     TWDocumentUploadTile(
                       label: 'Vehicle Insurance Policy',
-                      status: DocumentStatus.pending,
+                      status: _uploadedDocs.containsKey('insurance') ? DocumentStatus.uploaded : DocumentStatus.pending,
                       documentIcon: Icons.shield_outlined,
-                      onTap: () {},
+                      onTap: () => _handleDocUpload('insurance'),
                     ).animate().fade(delay: 600.ms).slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 16),
                     
                     TWDocumentUploadTile(
                       label: 'Road Worthiness Certificate',
-                      status: DocumentStatus.pending,
+                      status: _uploadedDocs.containsKey('road_worthiness') ? DocumentStatus.uploaded : DocumentStatus.pending,
                       documentIcon: Icons.verified_outlined,
-                      onTap: () {},
+                      onTap: () => _handleDocUpload('road_worthiness'),
                     ).animate().fade(delay: 700.ms).slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 32),
                     
@@ -146,15 +190,12 @@ class DriverDocumentUploadScreen extends StatelessWidget {
                 color: AppColors.ink,
                 border: Border(top: BorderSide(color: AppColors.borderStroke)),
               ),
-              child: TWButton(
-                label: 'Submit Documents',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const DriverOnboardingVerificationScreen()),
-                  );
-                },
-              ),
+              child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : TWButton(
+                    label: 'Submit Documents',
+                    onPressed: _submitDocuments,
+                  ),
             ).animate().slideY(begin: 1, end: 0, duration: 400.ms, delay: 900.ms, curve: Curves.easeOutCubic),
           ],
         ),

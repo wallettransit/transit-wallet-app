@@ -8,7 +8,7 @@ import '../../../core/components/tw_phone_prefix.dart';
 import '../../../../core/components/tw_logo.dart';
 import 'driver_registration_screen.dart';
 import 'forgot_password_screen.dart';
-import '../../driver/presentation/onboarding/driver_kyc_screen.dart';
+import '../../driver_dashboard/presentation/driver_main_layout.dart';
 
 class DriverLoginScreen extends StatefulWidget {
   const DriverLoginScreen({super.key});
@@ -19,6 +19,7 @@ class DriverLoginScreen extends StatefulWidget {
 
 class _DriverLoginScreenState extends State<DriverLoginScreen> {
   bool _obscurePassword = true;
+  bool _isPhoneLogin = true;
 
   @override
   Widget build(BuildContext context) {
@@ -83,13 +84,76 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // phone-field
-                        TWTextField(
-                          label: 'Phone Number',
-                          hintText: '802 899 1234',
-                          keyboardType: TextInputType.phone,
-                          prefixIcon: const TWPhonePrefix(),
+                        // login-method-toggle
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _isPhoneLogin = true),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: _isPhoneLogin ? AppColors.kekeGreen.withOpacity(0.1) : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: _isPhoneLogin ? AppColors.kekeGreen : AppColors.borderStroke,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'Phone',
+                                      style: AppTypography.label.copyWith(
+                                        color: _isPhoneLogin ? AppColors.kekeGreen : AppColors.muted,
+                                        fontWeight: _isPhoneLogin ? FontWeight.bold : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _isPhoneLogin = false),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: !_isPhoneLogin ? AppColors.kekeGreen.withOpacity(0.1) : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: !_isPhoneLogin ? AppColors.kekeGreen : AppColors.borderStroke,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'Email',
+                                      style: AppTypography.label.copyWith(
+                                        color: !_isPhoneLogin ? AppColors.kekeGreen : AppColors.muted,
+                                        fontWeight: !_isPhoneLogin ? FontWeight.bold : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: 24),
+
+                        // dynamic-identity-field
+                        _isPhoneLogin 
+                          ? TWTextField(
+                              label: 'Phone Number',
+                              hintText: '802 899 1234',
+                              keyboardType: TextInputType.phone,
+                              prefixIcon: const TWPhonePrefix(),
+                            )
+                          : TWTextField(
+                              label: 'Email Address',
+                              hintText: 'example@email.com',
+                              keyboardType: TextInputType.emailAddress,
+                              prefixIcon: const Icon(Icons.email_outlined, color: AppColors.muted, size: 20),
+                            ),
                         const SizedBox(height: 20),
                         
                         // password-field
@@ -154,7 +218,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => const DriverKYCScreen()),
+                        MaterialPageRoute(builder: (context) => const DriverMainLayout()),
                         (route) => false,
                       );
                     },

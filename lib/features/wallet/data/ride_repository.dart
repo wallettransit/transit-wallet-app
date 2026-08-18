@@ -6,7 +6,10 @@ final rideRepositoryProvider = Provider<RideRepository>((ref) {
   return RideRepository(Supabase.instance.client);
 });
 
-final recentRidesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final recentRidesProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  // Cache the recent rides to prevent unnecessary refetching
+  ref.keepAlive();
+
   final repository = ref.watch(rideRepositoryProvider);
   final user = ref.watch(authRepositoryProvider).currentUser;
   

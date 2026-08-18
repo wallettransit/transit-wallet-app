@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -21,10 +22,17 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.ink,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        flexibleSpace: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.black.withOpacity(0.2)),
+          ),
+        ),
         title: Text(
           'Edit Profile',
           style: AppTypography.heading3.copyWith(color: AppColors.paper),
@@ -34,13 +42,21 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+            center: Alignment(-0.8, -0.8),
+            radius: 1.5,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Avatar section
@@ -91,46 +107,52 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                         ),
                         const SizedBox(height: 16),
                         // Language Dropdown
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.cardBackground,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.borderStroke),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _selectedLanguage,
-                              dropdownColor: AppColors.cardBackground,
-                              isExpanded: true,
-                              icon: const Icon(Icons.arrow_drop_down, color: AppColors.muted),
-                              style: AppTypography.bodyLarge.copyWith(color: AppColors.paper),
-                              items: ['English', 'Pidgin (Beta)', 'Yoruba (Beta)', 'Hausa (Beta)']
-                                  .map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.language, color: AppColors.kekeGreen, size: 20),
-                                      const SizedBox(width: 12),
-                                      Text(value),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (newValue) {
-                                if (newValue != null) {
-                                  setState(() {
-                                    _selectedLanguage = newValue;
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Language changed to $newValue'),
-                                      backgroundColor: AppColors.kekeGreen,
-                                    ),
-                                  );
-                                }
-                              },
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.03),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedLanguage,
+                                  dropdownColor: const Color(0xFF1E293B),
+                                  isExpanded: true,
+                                  icon: const Icon(Icons.arrow_drop_down, color: AppColors.muted),
+                                  style: AppTypography.bodyLarge.copyWith(color: AppColors.paper),
+                                  items: ['English', 'Pidgin (Beta)', 'Yoruba (Beta)', 'Hausa (Beta)']
+                                      .map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.language, color: AppColors.kekeGreen, size: 20),
+                                          const SizedBox(width: 12),
+                                          Text(value),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        _selectedLanguage = newValue;
+                                      });
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Language changed to $newValue'),
+                                          backgroundColor: AppColors.kekeGreen,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -175,6 +197,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

@@ -8,7 +8,14 @@ import 'driver_vehicle_registration_screen.dart';
 import '../../../../core/components/tw_logo.dart';
 
 class DriverOtpScreen extends StatefulWidget {
-  const DriverOtpScreen({super.key});
+  final String phone;
+  final String? email;
+
+  const DriverOtpScreen({
+    super.key,
+    required this.phone,
+    this.email,
+  });
 
   @override
   State<DriverOtpScreen> createState() => _DriverOtpScreenState();
@@ -18,6 +25,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
   final List<TextEditingController> _controllers = List.generate(6, (index) => TextEditingController());
   int _focusedIndex = 0;
+  bool _useEmail = false;
 
   @override
   void initState() {
@@ -99,7 +107,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Verify Your Phone',
+                          _useEmail ? 'Verify Your Email' : 'Verify Your Phone',
                           style: GoogleFonts.outfit(
                             color: AppTheme.paper,
                             fontSize: 32,
@@ -109,7 +117,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'We sent a 6-digit verification code to +234 *** *** 4521. Please enter it below.',
+                          'We sent a 6-digit verification code to ${_useEmail ? widget.email : widget.phone}. Please enter it below.',
                           style: GoogleFonts.manrope(
                             color: AppTheme.muted,
                             fontSize: 16,
@@ -150,7 +158,27 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                             height: 21.0 / 14,
                           ),
                         ).animate(onPlay: (controller) => controller.repeat(reverse: true)).shimmer(duration: 2000.ms, color: Colors.white30),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 16),
+                        if (widget.email != null && widget.email!.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _useEmail = !_useEmail;
+                              });
+                              // Add logic to trigger resend to the new destination if needed
+                            },
+                            child: Text(
+                              _useEmail ? 'Send code to Phone instead?' : 'Send code to Email instead?',
+                              style: GoogleFonts.manrope(
+                                color: AppTheme.kekeGreen,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                decoration: TextDecoration.underline,
+                                decorationColor: AppTheme.kekeGreen,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 32),
                         
                         SizedBox(
                           width: double.infinity,

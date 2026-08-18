@@ -10,6 +10,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/components/tw_button.dart';
 import '../providers/auth_provider.dart';
 import 'welcome_screen.dart';
+import '../../../../core/services/secure_storage_service.dart';
 
 class AppLockScreen extends ConsumerStatefulWidget {
   const AppLockScreen({super.key});
@@ -97,14 +98,26 @@ class _AppLockScreenState extends ConsumerState<AppLockScreen> {
     ref.read(isAppLockedProvider.notifier).state = false;
   }
 
-  void _verifyPin() {
-    // In a real app, this would verify against a securely stored PIN.
-    // For now, any 4-digit PIN unlocks it if biometrics fail.
-    if (_pinController.text.length >= 4) {
+  Future<void> _verifyPin() async {
+    final enteredPin = _pinController.text;
+    if (enteredPin.length < 4) return;
+    
+    // In a production app, the stored PIN is checked securely.
+    final storedPin = await SecureStorageService.getPin();
+    
+    if (storedPin == null) {
+      // Edge case: No PIN was ever set, let them through or force setup.
+      // For now, if no PIN is set, allow them in so they aren't locked out.
+      _unlock();
+      return;
+    }
+
+    if (enteredPin == storedPin) {
       _unlock();
     } else {
       setState(() {
-        _errorMessage = 'Please enter a valid 4-digit PIN.';
+        _errorMessage = 'Incorrect PIN. Please try again.';
+        _pinController.clear();
       });
     }
   }

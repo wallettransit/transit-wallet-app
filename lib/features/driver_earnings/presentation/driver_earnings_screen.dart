@@ -1,3 +1,4 @@
+import 'dart:ui';
 import '../../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,7 +12,15 @@ class DriverEarningsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.ink,
-      body: SafeArea(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+            center: Alignment(-0.8, -0.8),
+            radius: 1.5,
+          ),
+        ),
+        child: SafeArea(
         child: Column(
           children: [
             // screen-header
@@ -54,14 +63,25 @@ class DriverEarningsScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       // chart-card
-                      Container(
-                        padding: const EdgeInsets.all(20.0),
-                        decoration: BoxDecoration(
-                          color: AppColors.cardBackground,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.borderStroke, width: 1),
-                        ),
-                        child: Column(
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
+                          child: Container(
+                            padding: const EdgeInsets.all(20.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.03),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
                           children: [
                             // chart-header
                             Row(
@@ -143,6 +163,8 @@ class DriverEarningsScreen extends StatelessWidget {
                               ),
                             ),
                           ],
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -195,6 +217,7 @@ class DriverEarningsScreen extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -225,40 +248,48 @@ class DriverEarningsScreen extends StatelessWidget {
   }
 
   Widget _buildStatBox(String title, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(14.0),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderStroke, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+        child: Container(
+          padding: const EdgeInsets.all(14.0),
+
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 14, color: AppTheme.muted),
-              const SizedBox(width: 6),
+              Row(
+                children: [
+                  Icon(icon, size: 14, color: AppTheme.muted),
+                  const SizedBox(width: 6),
+                  Text(
+                    title,
+                    style: GoogleFonts.manrope(
+                      color: AppTheme.muted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               Text(
-                title,
-                style: GoogleFonts.manrope(
-                  color: AppTheme.muted,
-                  fontSize: 12,
+                value,
+                style: GoogleFonts.outfit(
+                  color: AppTheme.paper,
+                  fontSize: 18,
                   fontWeight: FontWeight.w600,
+                  height: 22.68 / 18,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.manrope(
-              color: AppTheme.paper,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

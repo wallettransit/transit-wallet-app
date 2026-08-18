@@ -10,6 +10,7 @@ import 'core/providers/network_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'core/services/push_notification_service.dart';
 import 'core/services/session_manager.dart';
 import 'features/auth/providers/auth_provider.dart';
@@ -35,7 +36,9 @@ void main() async {
   }
 
   try {
-    await Firebase.initializeApp();
+    if (!kIsWeb) {
+      await Firebase.initializeApp();
+    }
   } catch (e) {
     debugPrint("Failed to initialize Firebase: $e");
   }
