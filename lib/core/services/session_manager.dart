@@ -3,16 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import 'secure_storage_service.dart';
 
 class SessionManager extends ConsumerStatefulWidget {
   final Widget child;
-  final Duration timeoutDuration;
 
-  const SessionManager({
-    super.key,
-    required this.child,
-    this.timeoutDuration = const Duration(minutes: 15),
-  });
+  const SessionManager({super.key, required this.child});
 
   @override
   ConsumerState<SessionManager> createState() => _SessionManagerState();
@@ -21,12 +17,19 @@ class SessionManager extends ConsumerStatefulWidget {
 class _SessionManagerState extends ConsumerState<SessionManager> with WidgetsBindingObserver {
   Timer? _inactivityTimer;
   static const String _lastActiveKey = 'last_active_timestamp';
+  Duration _timeoutDuration = const Duration(minutes: 5); // default
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkBackgroundTimeout();
+    _loadTimeoutAndCheck();
+  }
+
+  Future<void> _loadTimeoutAndCheck() async {
+    final timeoutSeconds = await SecureStorageService.getLockTimeoutSeconds();
+    _timeoutDuration = Duration(seconds: timeoutSeconds);
+    await _checkBackgroundTimeout();
     _startTimer();
   }
 
@@ -39,10 +42,12 @@ class _SessionManagerState extends ConsumerState<SessionManager> with WidgetsBin
 
   void _startTimer() {
     _inactivityTimer?.cancel();
-    // Only run timer if user is authenticated
     final authState = ref.read(authStateChangesProvider).value;
     if (authState?.session != null && !ref.read(isAppLockedProvider)) {
-      _inactivityTimer = Timer(widget.timeoutDuration, _handleTimeout);
+      // Never lock if timeout is set to 0 (meaning "never")
+      if (_timeoutDuration.inSeconds > 0) {
+        _inactivityTimer = Timer(_timeoutDuration, _handleTimeout);
+      }
     }
   }
 
@@ -51,9 +56,15 @@ class _SessionManagerState extends ConsumerState<SessionManager> with WidgetsBin
     _startTimer();
   }
 
-  void _handleTimeout() {
-    // Lock the app
-    ref.read(isAppLockedProvider.notifier).state = true;
+  Future<void> _handleTimeout() async {
+    final authState = ref.read(authStateChangesProvider).value;
+    if (authState?.session != null) {
+      final deviceLockEnabled = await SecureStorageService.isDeviceLockEnabled();
+      final hasPin = await SecureStorageService.hasPin();
+      if (deviceLockEnabled && hasPin) {
+        ref.read(isAppLockedProvider.notifier).state = true;
+      }
+    }
   }
 
   Future<void> _recordActiveTimestamp() async {
@@ -62,18 +73,23 @@ class _SessionManagerState extends ConsumerState<SessionManager> with WidgetsBin
   }
 
   Future<void> _checkBackgroundTimeout() async {
+    final deviceLockEnabled = await SecureStorageService.isDeviceLockEnabled();
+    final hasPin = await SecureStorageService.hasPin();
+    if (!deviceLockEnabled || !hasPin) return;
+
     final prefs = await SharedPreferences.getInstance();
     final lastActiveMillis = prefs.getInt(_lastActiveKey);
-    
+
     if (lastActiveMillis != null) {
       final lastActive = DateTime.fromMillisecondsSinceEpoch(lastActiveMillis);
       final difference = DateTime.now().difference(lastActive);
-      
-      if (difference > widget.timeoutDuration) {
-        // We've been in the background/killed for too long, lock on startup
-        // Delay to allow providers to initialize
+
+      if (difference > _timeoutDuration && _timeoutDuration.inSeconds > 0) {
         Future.microtask(() {
-          ref.read(isAppLockedProvider.notifier).state = true;
+          final authState = ref.read(authStateChangesProvider).value;
+          if (authState?.session != null) {
+            ref.read(isAppLockedProvider.notifier).state = true;
+          }
         });
       }
     }
@@ -83,8 +99,7 @@ class _SessionManagerState extends ConsumerState<SessionManager> with WidgetsBin
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _checkBackgroundTimeout();
-      _startTimer();
+      _loadTimeoutAndCheck(); // Reload timeout in case user changed it
     } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _inactivityTimer?.cancel();
       _recordActiveTimestamp();
@@ -93,12 +108,11 @@ class _SessionManagerState extends ConsumerState<SessionManager> with WidgetsBin
 
   @override
   Widget build(BuildContext context) {
-    // Wrap with GestureDetector to catch all interactions
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: _resetTimer,
-      onPanDown: (_) => _resetTimer,
-      onScaleStart: (_) => _resetTimer,
+      onPanDown: (_) => _resetTimer(),
+      onScaleStart: (_) => _resetTimer(),
       child: widget.child,
     );
   }

@@ -11,8 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/wallet_repository.dart';
 import '../../../core/components/tw_snackbar.dart';
-import '../../profile/providers/profile_provider.dart';
-import '../../profile/presentation/passenger_kyc_screen.dart';
 
 class PassengerTopUpScreen extends ConsumerStatefulWidget {
   const PassengerTopUpScreen({super.key});
@@ -133,8 +131,8 @@ class _PassengerTopUpScreenState extends ConsumerState<PassengerTopUpScreen> wit
   void _initDeepLinks() {
     _appLinks = AppLinks();
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
-      final isHttpsMatch = uri.host == 'transitwallet.app' && uri.path.contains('/topup/callback');
-      final isCustomSchemeMatch = uri.scheme == 'transitwallet' && uri.host == 'payment' && uri.path.contains('/callback');
+      final isHttpsMatch = uri.host == 'oyapay.app' && uri.path.contains('/topup/callback');
+      final isCustomSchemeMatch = uri.scheme == 'oyapay' && uri.host == 'payment' && uri.path.contains('/callback');
       
       if (isHttpsMatch || isCustomSchemeMatch) {
         final reference = uri.queryParameters['reference'];
@@ -309,7 +307,7 @@ class _PassengerTopUpScreenState extends ConsumerState<PassengerTopUpScreen> wit
                   children: [
                     // Title
                     Text(
-                      'Top Up Wallet',
+                      'Fund Wallet',
                       style: AppTypography.heading2.copyWith(color: AppColors.paper),
                     ).animate().fade().slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 8),

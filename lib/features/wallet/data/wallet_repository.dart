@@ -80,7 +80,7 @@ class WalletRepository {
         cleanedPhone = '+$cleanedPhone';
       }
 
-      final response = await _client.rpc('fn_transfer_funds', params: {
+      await _client.rpc('fn_transfer_funds', params: {
         'p_sender_id': senderId,
         'p_recipient_phone': cleanedPhone,
         'p_amount_kobo': (amount * 100).toInt(),
@@ -103,7 +103,7 @@ class WalletRepository {
       final response = await _client.functions.invoke('initiate-topup', body: {
         'user_id': userId,
         'amount_kobo': (amount * 100).toInt(),
-        'email': email ?? '$userId@transitwallet.internal.com',
+        'email': email ?? '$userId@oyapay.internal.com',
       });
       
       final data = response.data;

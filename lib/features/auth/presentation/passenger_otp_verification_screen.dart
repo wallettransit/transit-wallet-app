@@ -11,6 +11,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_typography.dart';
 import 'passenger_welcome_screen.dart';
 import '../../../../core/services/termii_service.dart';
+import '../../../../core/components/tw_snackbar.dart';
+import '../../../../core/services/email_otp_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PassengerOtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -29,6 +32,7 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
   bool _isLoading = false;
   String? _pinId;
+  bool _emailMode = false;
   
   Timer? _timer;
   int _secondsRemaining = 30;
@@ -41,6 +45,11 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
   }
 
   Future<void> _sendOtp() async {
+    if (_emailMode) {
+      await _sendEmailOtp();
+      return;
+    }
+    
     try {
       final pinId = await TermiiService.sendOtp(widget.phoneNumber);
       if (mounted) {
@@ -50,12 +59,26 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppColors.errorRed,
-          ),
-        );
+        TWSnackbar.showError(context, e.toString());
+      }
+    }
+  }
+
+  Future<void> _sendEmailOtp() async {
+    try {
+      final email = Supabase.instance.client.auth.currentUser?.email;
+      if (email == null) throw Exception('No email found for current user');
+      
+      final pinId = await EmailOtpService.sendOtp(email);
+      if (mounted) {
+        setState(() {
+          _pinId = pinId;
+        });
+        TWSnackbar.showSuccess(context, 'Testing OTP (1234) sent to email!');
+      }
+    } catch (e) {
+      if (mounted) {
+        TWSnackbar.showError(context, e.toString());
       }
     }
   }
@@ -84,19 +107,17 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
     final otp = _controllers.map((c) => c.text).join();
     if (otp.length == 4) {
       if (_pinId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Wait for OTP to be sent before verifying.'),
-            backgroundColor: AppColors.errorRed,
-          ),
-        );
+        TWSnackbar.showError(context, 'Wait for OTP to be sent before verifying.');
         return;
       }
 
       setState(() => _isLoading = true);
       
       try {
-        final isValid = await TermiiService.verifyOtp(_pinId!, otp);
+        final isValid = _emailMode 
+            ? await EmailOtpService.verifyOtp(_pinId!, otp)
+            : await TermiiService.verifyOtp(_pinId!, otp);
+            
         if (mounted) {
           setState(() => _isLoading = false);
           if (isValid) {
@@ -109,21 +130,11 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
       } catch (e) {
         if (mounted) {
           setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString()),
-              backgroundColor: AppColors.errorRed,
-            ),
-          );
+          TWSnackbar.showError(context, e.toString());
         }
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a 4-digit code'),
-          backgroundColor: AppColors.errorRed,
-        ),
-      );
+      TWSnackbar.showError(context, 'Please enter a 4-digit code');
     }
   }
 
@@ -214,8 +225,11 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
                     ).animate().fade(delay: 100.ms).slideY(begin: 0.2, end: 0),
                     const SizedBox(height: 8),
                     Text(
-                      'We sent a 4-digit verification code to ${widget.phoneNumber}. Please enter it below.',
+                      _emailMode 
+                          ? 'Enter the 4-digit code sent to your email.'
+                          : 'Enter the 4-digit code sent to ${widget.phoneNumber}',
                       style: AppTypography.bodyMedium.copyWith(color: AppColors.muted),
+                      textAlign: TextAlign.center,
                     ).animate().fade(delay: 200.ms).slideY(begin: 0.2, end: 0),
                     
                     const SizedBox(height: 48),
@@ -274,6 +288,24 @@ class _PassengerOtpVerificationScreenState extends State<PassengerOtpVerificatio
                     isLoading: _isLoading,
                   ),
                   const SizedBox(height: 20),
+                  
+                  if (!_emailMode)
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _emailMode = true;
+                        });
+                        _startTimer();
+                        _sendEmailOtp();
+                      },
+                      child: Text(
+                        "Didn't receive SMS? Send OTP via Email",
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.kekeGreen, 
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

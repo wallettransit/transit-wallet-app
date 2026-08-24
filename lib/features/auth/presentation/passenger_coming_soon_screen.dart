@@ -61,7 +61,7 @@ class PassengerComingSoonScreen extends StatelessWidget {
               const SizedBox(height: 16),
               
               Text(
-                'We are currently working hard to bring the TransitWallet experience to passengers. Stay tuned!',
+                'We are currently working hard to bring the OyaPayWallet experience to passengers. Stay tuned!',
                 style: AppTypography.bodyLarge.copyWith(
                   color: AppColors.muted,
                 ),

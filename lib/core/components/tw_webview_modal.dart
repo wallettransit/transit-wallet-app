@@ -52,8 +52,8 @@ class _TWWebviewModalState extends State<TWWebviewModal> {
           onNavigationRequest: (NavigationRequest request) {
             // If they reach the success callback URL, we can automatically close the modal.
             // The deep link handler in passenger_top_up_screen will pick it up and verify.
-            if (request.url.contains('transitwallet.app/topup/callback') || 
-                request.url.contains('transitwallet://payment/callback')) {
+            if (request.url.contains('oyapay.app/topup/callback') || 
+                request.url.contains('oyapay://payment/callback')) {
               Navigator.pop(context); // Close the modal
               // The deep link listener will handle the verification.
               // Alternatively, we could just let the webview redirect, and the OS will catch the app link.

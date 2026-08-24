@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'kyc_service.dart';
-import '../../auth/providers/auth_provider.dart';
 
 final kycRepositoryProvider = Provider<KycRepository>((ref) {
   return KycRepository(

@@ -80,6 +80,9 @@ class _PassengerLoginScreenState extends ConsumerState<PassengerLoginScreen> {
 
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      // Ensure the app doesn't immediately lock if there's a stale lock state from a previous session
+      ref.read(isAppLockedProvider.notifier).state = false;
+
       await ref.read(authControllerProvider.notifier).signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,

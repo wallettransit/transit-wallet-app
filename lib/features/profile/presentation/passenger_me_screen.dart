@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/components/tw_skeleton_loader.dart';
+import '../../../core/components/tw_coming_soon_screen.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../providers/profile_provider.dart';
 import 'passenger_kyc_screen.dart';
+import 'passenger_help_screen.dart';
+import 'passenger_settings_screen.dart';
 
 class PassengerMeScreen extends ConsumerWidget {
   const PassengerMeScreen({super.key});
@@ -15,7 +17,8 @@ class PassengerMeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(userProfileProvider);
-    final statsAsync = ref.watch(passengerStatsProvider);
+    final currentUser = ref.watch(authRepositoryProvider).currentUser;
+    final metadata = currentUser?.userMetadata ?? {};
 
     return Scaffold(
       backgroundColor: AppColors.ink,
@@ -26,174 +29,151 @@ class PassengerMeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'My Account',
-                style: AppTypography.heading1.copyWith(color: AppColors.paper),
+                'Account',
+                style: AppTypography.heading1.copyWith(color: AppColors.paper, fontSize: 32),
               ).animate().fade().slideY(begin: -0.2, end: 0),
               
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               
               // Profile Header
               profileAsync.when(
                 data: (profile) {
-                  final String userName = profile?['full_name'] ?? 'User';
-                  final String phoneNumber = profile?['phone_number'] ?? '';
-                  final String rawTier = profile?['kyc_tier'] ?? 'tier_1';
-                  final String kycTier = rawTier.replaceAll('_', ' ').replaceFirst('t', 'T'); // e.g. "Tier 1"
+                  final String userName = profile?['full_name'] ?? metadata['full_name'] ?? 'Passenger';
                   
                   return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userName,
+                            style: GoogleFonts.spaceGrotesk(color: AppColors.paper, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.star, color: AppColors.kekeGreen, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                '4.9', // Hardcoded rating for UI placeholder
+                                style: GoogleFonts.outfit(color: AppColors.paper, fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.kekeGreen.withOpacity(0.5), width: 2),
+                            ),
+                            child: CircleAvatar(
+                              radius: 28,
+                              backgroundColor: AppColors.kekeGreen.withOpacity(0.2),
+                              child: Text(
+                                userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U',
+                                style: GoogleFonts.spaceGrotesk(color: AppColors.kekeGreen, fontSize: 24, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -4,
+                            right: -4,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardBackground,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.ink, width: 2),
+                              ),
+                              child: const Icon(Icons.camera_alt, color: AppColors.paper, size: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ).animate().fade(delay: 100.ms).slideX(begin: -0.1, end: 0);
+                },
+                loading: () => const TWSkeletonLoader(width: double.infinity, height: 80, borderRadius: 24),
+                error: (_, __) => Text('Failed to load profile', style: AppTypography.bodyMedium.copyWith(color: AppColors.errorRed)),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Verification Banner
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PassengerKycScreen())),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.kekeGreen.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.kekeGreen.withOpacity(0.3)),
+                  ),
+                  child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
+                        padding: const EdgeInsets.all(12),
+                        decoration: const BoxDecoration(
+                          color: AppColors.kekeGreen,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.kekeGreen.withOpacity(0.5), width: 2),
                         ),
-                        child: CircleAvatar(
-                          radius: 32,
-                          backgroundColor: AppColors.kekeGreen.withOpacity(0.2),
-                          child: Text(
-                            userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U',
-                            style: GoogleFonts.spaceGrotesk(color: AppColors.kekeGreen, fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ).animate(onPlay: (controller) => controller.repeat(reverse: true)).scaleXY(end: 1.05, duration: 2.seconds),
+                        child: const Icon(Icons.security, color: AppColors.ink, size: 20),
+                      ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              userName,
-                              style: GoogleFonts.spaceGrotesk(color: AppColors.paper, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              'Enjoy smoother and safer rides',
+                              style: GoogleFonts.outfit(color: AppColors.paper, fontSize: 15, fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              phoneNumber,
-                              style: AppTypography.bodyMedium.copyWith(color: AppColors.muted),
+                              'Verify identity',
+                              style: GoogleFonts.outfit(color: AppColors.kekeGreen, fontSize: 13, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.danfoYellow.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.danfoYellow.withOpacity(0.4)),
-                        ),
-                        child: Text(
-                          kycTier,
-                          style: AppTypography.label.copyWith(color: AppColors.danfoYellow, fontWeight: FontWeight.bold),
-                        ),
-                      ),
                     ],
-                  ).animate().fade(delay: 100.ms).slideX(begin: -0.1, end: 0);
-                },
-                loading: () => const Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
-                error: (_, __) => Text('Failed to load profile', style: AppTypography.bodyMedium.copyWith(color: AppColors.errorRed)),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Ride Stats Board (Glassmorphic)
-              statsAsync.when(
-                data: (stats) {
-                  final totalRides = stats?['total_rides']?.toString() ?? '0';
-                  final totalSpentKobo = double.tryParse(stats?['total_spent_kobo']?.toString() ?? '0') ?? 0;
-                  final uniqueRoutes = stats?['unique_routes']?.toString() ?? '0';
-                  
-                  final spentFormatted = NumberFormat.compact().format(totalSpentKobo / 100);
-                  
-                  return Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0F3A26), Color(0xFF071F13)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFF0F3A26).withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 12)),
-                      ],
-                      border: Border.all(color: AppColors.kekeGreen.withOpacity(0.2), width: 1),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStatItem('RIDES', totalRides, Colors.white70),
-                        Container(height: 40, width: 1, color: Colors.white10),
-                        _buildStatItem('TOTAL SPENT', '₦$spentFormatted', Colors.white),
-                        Container(height: 40, width: 1, color: Colors.white10),
-                        _buildStatItem('ROUTES', uniqueRoutes, AppColors.kekeGreen),
-                      ],
-                    ),
-                  ).animate().fade(delay: 200.ms).slideY(begin: 0.1, end: 0);
-                },
-                loading: () => Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(28),
                   ),
-                  child: const Center(child: CircularProgressIndicator(color: AppColors.kekeGreen)),
                 ),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              Text(
-                'Account',
-                style: AppTypography.label.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-              ).animate().fade(delay: 300.ms),
-              const SizedBox(height: 12),
-              _buildSettingsCard([
-                _buildListTile(Icons.credit_card, AppColors.kekeGreen, 'Saved Payment Methods', trailing: const Icon(Icons.chevron_right, color: Colors.white24)),
-                Divider(height: 1, color: Colors.white.withOpacity(0.05), indent: 64, endIndent: 16),
-                _buildListTile(
-                  Icons.verified_user_outlined, 
-                  Colors.blueAccent,
-                  'KYC Verification', 
-                  subtitle: 'Upgrade to Tier 2', 
-                  trailing: const Icon(Icons.chevron_right, color: Colors.white24),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PassengerKycScreen())),
-                ),
-              ]).animate().fade(delay: 350.ms).slideY(begin: 0.1, end: 0),
+              ).animate().fade(delay: 200.ms).slideY(begin: 0.1, end: 0),
               
               const SizedBox(height: 32),
               
-              Text(
-                'Security',
-                style: AppTypography.label.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-              ).animate().fade(delay: 450.ms),
-              const SizedBox(height: 12),
+              // Section 1: Main Actions
               _buildSettingsCard([
-                _buildListTile(Icons.fingerprint, Colors.orangeAccent, 'Require Biometrics', trailing: Switch(value: true, onChanged: (v) {}, activeColor: AppColors.kekeGreen, activeTrackColor: AppColors.kekeGreen.withOpacity(0.2), inactiveTrackColor: Colors.white10, inactiveThumbColor: Colors.white54)),
-                Divider(height: 1, color: Colors.white.withOpacity(0.05), indent: 64, endIndent: 16),
-                _buildListTile(Icons.pin_outlined, Colors.purpleAccent, 'Change PIN', trailing: const Icon(Icons.chevron_right, color: Colors.white24)),
-              ]).animate().fade(delay: 500.ms).slideY(begin: 0.1, end: 0),
+                _buildListTile(context, Icons.person_outline, 'Profile', () => _navToComingSoon(context, 'Profile')),
+                _divider(),
+                _buildListTile(context, Icons.payment_outlined, 'Payment', () => _navToComingSoon(context, 'Payment')),
+                _divider(),
+                _buildListTile(context, Icons.help_outline, 'Support', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PassengerHelpScreen()))),
+                _divider(),
+                _buildListTile(context, Icons.health_and_safety_outlined, 'Safety', () => _navToComingSoon(context, 'Safety')),
+                _divider(),
+                _buildListTile(context, Icons.place_outlined, 'Saved places', () => _navToComingSoon(context, 'Saved places')),
+                _divider(),
+                _buildListTile(context, Icons.settings_outlined, 'Settings', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PassengerSettingsScreen()))),
+              ]).animate().fade(delay: 300.ms).slideY(begin: 0.1, end: 0),
               
               const SizedBox(height: 32),
               
-              Text(
-                'More',
-                style: AppTypography.label.copyWith(color: AppColors.muted, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-              ).animate().fade(delay: 600.ms),
-              const SizedBox(height: 12),
+              // Section 2: Secondary Actions
               _buildSettingsCard([
-                _buildListTile(
-                  Icons.card_giftcard, 
-                  AppColors.danfoYellow,
-                  'Refer a Friend', 
-                  subtitle: 'Earn ₦500 for every friend', 
-                  trailing: const Icon(Icons.chevron_right, color: Colors.white24)
-                ),
-                Divider(height: 1, color: Colors.white.withOpacity(0.05), indent: 64, endIndent: 16),
-                _buildListTile(Icons.help_outline, Colors.cyan, 'Help & Support', trailing: const Icon(Icons.chevron_right, color: Colors.white24)),
-              ]).animate().fade(delay: 650.ms).slideY(begin: 0.1, end: 0),
+                _buildListTile(context, Icons.bolt_outlined, 'OyaPay Plus', () => _navToComingSoon(context, 'OyaPay Plus'), subtitle: 'Unlock exclusive benefits', iconBg: AppColors.kekeGreen),
+                _divider(),
+                _buildListTile(context, Icons.local_offer_outlined, 'Promotions', () => _navToComingSoon(context, 'Promotions'), subtitle: 'Promo codes, offers, and savings'),
+                _divider(),
+                _buildListTile(context, Icons.family_restroom_outlined, 'Family Profile', () => _navToComingSoon(context, 'Family Profile')),
+              ]).animate().fade(delay: 400.ms).slideY(begin: 0.1, end: 0),
               
               const SizedBox(height: 48),
               
@@ -227,7 +207,7 @@ class PassengerMeScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-              ).animate().fade(delay: 800.ms).slideY(begin: 0.1, end: 0),
+              ).animate().fade(delay: 500.ms).slideY(begin: 0.1, end: 0),
             ],
           ),
         ),
@@ -235,20 +215,12 @@ class PassengerMeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color valueColor) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: GoogleFonts.spaceGrotesk(color: valueColor, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: AppTypography.label.copyWith(color: AppColors.kekeGreen.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-        ),
-      ],
-    );
+  void _navToComingSoon(BuildContext context, String title) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => TWComingSoonScreen(title: '$title Coming Soon', featureName: title)));
+  }
+
+  Widget _divider() {
+    return Divider(height: 1, color: Colors.white.withOpacity(0.05), indent: 56, endIndent: 16);
   }
 
   Widget _buildSettingsCard(List<Widget> children) {
@@ -264,30 +236,30 @@ class PassengerMeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildListTile(IconData icon, Color iconBg, String title, {String? subtitle, Widget? trailing, VoidCallback? onTap}) {
+  Widget _buildListTile(BuildContext context, IconData icon, String title, VoidCallback onTap, {String? subtitle, Color? iconBg}) {
+    final effectiveIconBg = iconBg ?? Colors.white.withOpacity(0.05);
+    final isColorIcon = iconBg != null;
+
     return ListTile(
       onTap: onTap,
       leading: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: iconBg.withOpacity(0.15),
+          color: isColorIcon ? effectiveIconBg : effectiveIconBg,
           shape: BoxShape.circle,
-          border: Border.all(color: iconBg.withOpacity(0.3)),
         ),
-        child: Icon(icon, color: iconBg, size: 20),
+        child: Icon(icon, color: isColorIcon ? AppColors.ink : AppColors.paper, size: 20),
       ),
       title: Text(
         title,
-        style: GoogleFonts.outfit(color: AppColors.paper, fontSize: 14, fontWeight: FontWeight.w600),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.outfit(color: AppColors.paper, fontSize: 15, fontWeight: FontWeight.w600),
       ),
       subtitle: subtitle != null ? Text(
         subtitle,
         style: AppTypography.label.copyWith(color: AppColors.muted),
       ) : null,
-      trailing: trailing,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      trailing: const Icon(Icons.chevron_right, color: Colors.white24, size: 20),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
     );
   }
 }

@@ -239,7 +239,7 @@ class PromoData {
     ),
     PromoItem(
       title: 'REFER & EARN',
-      description: 'Invite a friend to TransitWallet. You both get a free ride!',
+      description: 'Invite a friend to OyaPayWallet. You both get a free ride!',
       ctaText: 'Share Link',
       backgroundColor: const Color(0xFF2874A6), // Blue
       accentColor: const Color(0xFFD4E6F1), // Light Blue

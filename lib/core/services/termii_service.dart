@@ -41,7 +41,7 @@ class TermiiService {
         "pin_time_to_live": 5,
         "pin_length": 4,
         "pin_placeholder": "< 1234 >",
-        "message_text": "Your TransitWallet verification code is < 1234 >. Valid for 5 minutes.",
+        "message_text": "Your OyaPayWallet verification code is < 1234 >. Valid for 5 minutes.",
         "pin_type": "NUMERIC"
       }),
     );

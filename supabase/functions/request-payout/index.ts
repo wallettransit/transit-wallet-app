@@ -47,7 +47,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         type: "nuban",
-        name: account_name || "TransitWallet Driver",
+        name: account_name || "OyaPay Driver",
         account_number: account_number,
         bank_code: bank_code,
         currency: "NGN",
@@ -73,7 +73,7 @@ serve(async (req) => {
         amount: amount_kobo, 
         recipient: recipientCode,
         reference: txnId, // Use the DB transaction ID! This is crucial.
-        reason: "TransitWallet Driver Payout",
+        reason: "OyaPay Driver Payout",
       }),
     });
 

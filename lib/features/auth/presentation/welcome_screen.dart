@@ -134,7 +134,7 @@ class WelcomeScreen extends StatelessWidget {
                       ).animate().fade(delay: 400.ms).slideY(begin: 0.1, end: 0),
                       const SizedBox(height: 12),
                       Text(
-                        'Start earning with\nTransitWallet',
+                        'Start earning with\nOyaPayWallet',
                         style: AppTypography.heading1.copyWith(
                           fontSize: 36,
                           height: 1.1,

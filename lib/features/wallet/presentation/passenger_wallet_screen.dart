@@ -5,24 +5,25 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
-import 'passenger_top_up_screen.dart';
 import 'passenger_qr_scan_screen.dart';
-import 'passenger_ride_history_screen.dart';
 import '../../profile/presentation/passenger_profile_screen.dart';
-import '../../../core/components/tw_logo.dart';
-import '../../group_ride/presentation/passenger/passenger_group_ride_home_screen.dart';
-import '../../../../core/components/tw_transfer_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/providers/network_provider.dart';
+import '../../profile/presentation/passenger_notifications_screen.dart';
+import '../../profile/presentation/passenger_help_screen.dart';
+import '../../../core/providers/network_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/wallet_repository.dart';
 import '../data/ride_repository.dart';
-import '../../budget/presentation/passenger_budget_screen.dart';
-import '../../../core/components/tw_coming_soon_screen.dart';
-import 'offline_payment_qr_screen.dart';
 import '../../../../core/components/tw_updates_carousel.dart';
 import 'transaction_history_screen.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../../core/components/tw_notification_bell.dart';
+import 'passenger_top_up_screen.dart';
+import 'offline_payment_qr_screen.dart';
+import '../../group_ride/presentation/passenger/passenger_group_ride_home_screen.dart';
+import '../../../../core/components/tw_transfer_bottom_sheet.dart';
+import '../../budget/presentation/passenger_budget_screen.dart';
+import 'passenger_ride_history_screen.dart';
 
 class PassengerWalletScreen extends ConsumerStatefulWidget {
   const PassengerWalletScreen({super.key});
@@ -114,14 +115,81 @@ class _PassengerWalletScreenState extends ConsumerState<PassengerWalletScreen> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBackground,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white10),
-                    ),
-                    child: const Icon(Icons.notifications_none, color: AppColors.paper, size: 20),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Help Icon with Pill
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const PassengerHelpScreen()),
+                          );
+                        },
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardBackground,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white10),
+                              ),
+                              child: const Icon(Icons.headset_mic_outlined, color: AppColors.paper, size: 20),
+                            ),
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.errorRed.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'HELP',
+                                  style: AppTypography.label.copyWith(
+                                    color: AppColors.errorRed,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Scan Icon
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const PassengerQrScanScreen()),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackground,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: const Icon(Icons.qr_code_scanner, color: AppColors.paper, size: 20),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TWNotificationBell(
+                        hasUnread: true,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const PassengerNotificationsScreen()),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -226,7 +294,7 @@ class _PassengerWalletScreenState extends ConsumerState<PassengerWalletScreen> {
                                 Expanded(
                                   child: _buildActionButton(
                                     icon: Icons.add,
-                                    label: 'Top Up',
+                                    label: 'Fund Wallet',
                                     bgColor: AppColors.kekeGreen,
                                     textColor: AppColors.ink,
                                     onTap: () {

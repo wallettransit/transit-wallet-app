@@ -53,9 +53,10 @@ serve(async (req) => {
       const { reference, amount, customer } = payload.data;
       
       // Usually, user_id is passed as metadata or inferred from customer email 
-      // If we used the format `${user_id}@transitwallet.internal` in initiate-topup:
+      // If we used the format `${user_id}@oyapay.internal.com` in initiate-topup:
+      // Or in metadata. Let's assume we passed it in metadata.
       let userId = payload.data.metadata?.user_id;
-      if (!userId && customer?.email?.includes('@transitwallet.internal')) {
+      if (!userId && customer?.email?.includes('@oyapay.internal.com')) {
         userId = customer.email.split('@')[0];
       }
 

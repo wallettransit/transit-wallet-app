@@ -95,7 +95,7 @@ class _DriverVehicleSetupScreenState extends ConsumerState<DriverVehicleSetupScr
               const SizedBox(height: 8),
               
               Text(
-                'Add your primary operating vehicle to receive a TransitWallet QR Code.',
+                'Add your primary operating vehicle to receive a OyaPayWallet QR Code.',
                 style: GoogleFonts.manrope(
                   color: AppColors.muted,
                   fontSize: 15,

@@ -10,6 +10,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/wallet_repository.dart';
 import '../../../../core/components/tw_snackbar.dart';
+import '../../../../core/components/tw_transaction_pin_prompt.dart';
+import '../../../../core/services/secure_storage_service.dart';
+import '../../auth/presentation/create_pin_screen.dart';
+import '../data/wallet_repository.dart';
+import '../../../../core/components/tw_snackbar.dart';
 
 class WithdrawConfirmScreen extends ConsumerStatefulWidget {
   final double amount;
@@ -40,6 +45,39 @@ class _WithdrawConfirmScreenState extends ConsumerState<WithdrawConfirmScreen> {
       setState(() => _isProcessing = false);
       return;
     }
+
+    // Step 1: Ensure user has a PIN
+    final hasPin = await SecureStorageService.hasPin();
+    if (!hasPin) {
+      setState(() => _isProcessing = false);
+      if (mounted) {
+        TWSnackbar.showError(context, 'You must create a PIN before withdrawing.');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CreatePinScreen(
+              isDark: false,
+              onPinCreated: () => Navigator.pop(context),
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Step 2: Show PIN prompt
+    setState(() => _isProcessing = false); // Pause button spinner
+    final bool isAuthorized = await TWTransactionPinPrompt.show(
+      context,
+      title: 'Authorize Withdrawal',
+      subtitle: 'Enter your PIN to withdraw ₦${widget.amount.toStringAsFixed(2)}',
+    );
+
+    if (!isAuthorized) {
+      return; // User cancelled or failed
+    }
+
+    setState(() => _isProcessing = true); // Resume spinner
 
     // Default to '011' First Bank or similar if bank code is not passed directly (assuming it's passed or mocked for now)
     // Note: The UI currently just passes bankName, not bankCode. Using a mock code '058' (GTB) for integration test.

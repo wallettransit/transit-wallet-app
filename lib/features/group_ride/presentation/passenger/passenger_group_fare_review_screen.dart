@@ -90,7 +90,7 @@ class PassengerGroupFareReviewScreen extends ConsumerWidget {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'TransitWallet Subsidy Applied',
+                                    'OyaPayWallet Subsidy Applied',
                                     style: GoogleFonts.outfit(
                                       color: AppColors.kekeGreen,
                                       fontSize: 14,
@@ -102,7 +102,7 @@ class PassengerGroupFareReviewScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'This route qualifies for Nigerian Commuter Subsidy initiative. TransitWallet covers 20% of remaining cost.',
+                              'This route qualifies for Nigerian Commuter Subsidy initiative. OyaPayWallet covers 20% of remaining cost.',
                               style: GoogleFonts.manrope(
                                 color: AppColors.muted,
                                 fontSize: 12,
@@ -126,7 +126,7 @@ class PassengerGroupFareReviewScreen extends ConsumerWidget {
                           children: [
                             _buildFareRow('Group Rate Fare', '₦${baseFare.toStringAsFixed(0)}', AppColors.muted, AppColors.paper),
                             const SizedBox(height: 12),
-                            _buildFareRow('TransitWallet Subsidy', '-₦${subsidy.toStringAsFixed(0)}', AppColors.muted, AppColors.kekeGreen),
+                            _buildFareRow('OyaPayWallet Subsidy', '-₦${subsidy.toStringAsFixed(0)}', AppColors.muted, AppColors.kekeGreen),
                             const SizedBox(height: 16),
                             const Divider(color: AppColors.borderStroke, height: 1),
                             const SizedBox(height: 16),
@@ -153,7 +153,7 @@ class PassengerGroupFareReviewScreen extends ConsumerWidget {
                                 const Icon(Icons.account_balance_wallet_outlined, size: 18, color: AppColors.muted),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'TransitWallet Balance',
+                                  'OyaPayWallet Balance',
                                   style: GoogleFonts.manrope(
                                     color: AppColors.muted,
                                     fontSize: 14,

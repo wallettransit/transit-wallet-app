@@ -27,6 +27,9 @@ class _PassengerRegistrationScreenState extends ConsumerState<PassengerRegistrat
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -160,7 +163,18 @@ class _PassengerRegistrationScreenState extends ConsumerState<PassengerRegistrat
                         label: 'Choose Password',
                         hintText: 'At least 8 characters',
                         controller: _passwordController,
-                        obscureText: true,
+                        obscureText: _obscurePassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            color: AppColors.muted,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                         onChanged: (val) => setState(() {}),
                         validator: (value) => value != null && value.length < 8 ? 'Password must be at least 8 characters' : null,
                       ).animate().fade(delay: 600.ms).slideX(begin: 0.1, end: 0),
@@ -173,7 +187,18 @@ class _PassengerRegistrationScreenState extends ConsumerState<PassengerRegistrat
                         label: 'Confirm Password',
                         hintText: 'Re-enter password',
                         controller: _confirmPasswordController,
-                        obscureText: true,
+                        obscureText: _obscureConfirmPassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                            color: AppColors.muted,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                            });
+                          },
+                        ),
                         validator: (value) {
                           if (value != _passwordController.text) {
                             return 'Passwords do not match';
@@ -191,7 +216,7 @@ class _PassengerRegistrationScreenState extends ConsumerState<PassengerRegistrat
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              "I agree to TransitWallet's Terms of Service and Privacy Policy.",
+                              "I agree to OyaPayWallet's Terms of Service and Privacy Policy.",
                               style: AppTypography.bodySmall.copyWith(color: AppColors.muted),
                             ),
                           ),

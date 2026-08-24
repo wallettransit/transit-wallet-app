@@ -27,21 +27,21 @@ class AppTypography {
 
   // Body text (Manrope)
   static TextStyle bodyLarge = GoogleFonts.manrope(
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.4,
     color: AppColors.paper,
   );
 
   static TextStyle bodyMedium = GoogleFonts.manrope(
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.4,
     color: AppColors.paper,
   );
 
   static TextStyle bodySmall = GoogleFonts.manrope(
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
     height: 1.4,
     color: AppColors.muted,

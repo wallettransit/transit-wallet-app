@@ -1,5 +1,4 @@
 import 'dart:ui';
-import '../../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -11,13 +10,13 @@ class DriverEarningsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.ink,
+      backgroundColor: Colors.white, // Light background
       body: Container(
         decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-            center: Alignment(-0.8, -0.8),
-            radius: 1.5,
+          gradient: LinearGradient(
+            colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)], // Soft light gradient
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
         child: SafeArea(
@@ -34,7 +33,7 @@ class DriverEarningsScreen extends StatelessWidget {
                       Text(
                         'Earnings Record',
                         style: GoogleFonts.outfit(
-                          color: AppTheme.paper,
+                          color: AppTheme.ink, // Dark text
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           height: 25.2 / 20,
@@ -42,9 +41,9 @@ class DriverEarningsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Verified income records for TransitWallet drivers',
+                        'Verified income records for OyaPayWallet drivers',
                         style: GoogleFonts.manrope(
-                          color: AppTheme.muted,
+                          color: Colors.grey[600], // Darker muted text
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           height: 19.5 / 13,
@@ -70,12 +69,12 @@ class DriverEarningsScreen extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(20.0),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.03),
+                              color: Colors.white.withOpacity(0.7), // Light glass
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                              border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
+                                  color: Colors.black.withOpacity(0.05),
                                   blurRadius: 16,
                                   offset: const Offset(0, 4),
                                 ),
@@ -94,7 +93,7 @@ class DriverEarningsScreen extends StatelessWidget {
                                     Text(
                                       "THIS WEEK'S COLLECTION",
                                       style: GoogleFonts.manrope(
-                                        color: AppTheme.muted,
+                                        color: Colors.grey[600],
                                         fontSize: 12,
                                         fontWeight: FontWeight.w700,
                                         height: 18.0 / 12,
@@ -175,12 +174,12 @@ class DriverEarningsScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.verified_user, size: 18, color: AppTheme.paper),
+                              const Icon(Icons.verified_user, size: 18, color: AppTheme.ink), // Dark icon
                               const SizedBox(width: 8),
                               Text(
                                 'VERIFIED FINANCIAL PROFILE',
                                 style: GoogleFonts.manrope(
-                                  color: AppTheme.paper,
+                                  color: AppTheme.ink, // Dark text
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   height: 21.0 / 14,
@@ -237,7 +236,7 @@ class DriverEarningsScreen extends StatelessWidget {
         Text(
           day,
           style: GoogleFonts.manrope(
-            color: isHighlight ? AppTheme.danfoYellow : AppTheme.muted,
+            color: isHighlight ? AppTheme.danfoYellow : Colors.grey[700],
             fontSize: 11,
             fontWeight: FontWeight.w700,
             height: 16.5 / 11,
@@ -256,21 +255,21 @@ class DriverEarningsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(14.0),
 
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
+            color: Colors.white.withOpacity(0.7), // Light glass
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+            border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(icon, size: 14, color: AppTheme.muted),
+                  Icon(icon, size: 14, color: Colors.grey[600]), // Darker muted
                   const SizedBox(width: 6),
                   Text(
                     title,
                     style: GoogleFonts.manrope(
-                      color: AppTheme.muted,
+                      color: Colors.grey[600],
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -281,7 +280,7 @@ class DriverEarningsScreen extends StatelessWidget {
               Text(
                 value,
                 style: GoogleFonts.outfit(
-                  color: AppTheme.paper,
+                  color: AppTheme.ink, // Dark text
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   height: 22.68 / 18,

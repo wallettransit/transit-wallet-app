@@ -15,7 +15,13 @@ import 'core/services/push_notification_service.dart';
 import 'core/services/session_manager.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/wallet/presentation/passenger_main_layout.dart';
+import 'features/driver_dashboard/presentation/driver_main_layout.dart';
 import 'features/auth/presentation/app_lock_screen.dart';
+import 'core/services/secure_storage_service.dart';
+import 'features/auth/presentation/create_pin_screen.dart';
+import 'features/auth/data/auth_repository.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +35,7 @@ void main() async {
   try {
     await Supabase.initialize(
       url: 'https://shoehdyteenfeofqmsko.supabase.co',
-      anonKey: 'sb_publishable_I9jMQGv0GXQL7j8GEDFsAg_JJTVJxzc',
+      publishableKey: 'sb_publishable_I9jMQGv0GXQL7j8GEDFsAg_JJTVJxzc',
     );
   } catch (e) {
     debugPrint("Failed to initialize Supabase: $e");
@@ -55,19 +61,19 @@ void main() async {
   
   runApp(
     ProviderScope(
-      child: TransitWalletApp(key: UniqueKey()),
+      child: OyaPayWalletApp(key: UniqueKey()),
     ),
   );
 }
 
-class TransitWalletApp extends ConsumerStatefulWidget {
-  const TransitWalletApp({super.key});
+class OyaPayWalletApp extends ConsumerStatefulWidget {
+  const OyaPayWalletApp({super.key});
 
   @override
-  ConsumerState<TransitWalletApp> createState() => _TransitWalletAppState();
+  ConsumerState<OyaPayWalletApp> createState() => _OyaPayWalletAppState();
 }
 
-class _TransitWalletAppState extends ConsumerState<TransitWalletApp> {
+class _OyaPayWalletAppState extends ConsumerState<OyaPayWalletApp> {
   @override
   void initState() {
     super.initState();
@@ -81,6 +87,7 @@ class _TransitWalletAppState extends ConsumerState<TransitWalletApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'OyaPay',
+      navigatorKey: navigatorKey,
       theme: AppTheme.darkTheme.copyWith(
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
@@ -150,11 +157,57 @@ class _AuthWrapperState extends ConsumerState<_AuthWrapper> {
     
     final session = Supabase.instance.client.auth.currentSession;
     if (session != null && mounted) {
-      // User is logged in, navigate to main layout
-      // Note: role-based routing can be added here if we have drivers
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const PassengerMainLayout()),
-      );
+      // Check if user has set up their PIN on this device
+      final hasPin = await SecureStorageService.hasPin();
+      
+      if (!mounted) return;
+
+      if (!hasPin) {
+        // Force mandatory PIN setup
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => CreatePinScreen(
+              isDark: false, // Match app theme if needed
+              onPinCreated: () {
+                // Return to auth wrapper to properly route based on role
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const _AuthWrapper()),
+                );
+              },
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Fetch user role from Supabase to route correctly
+      try {
+        final authRepo = AuthRepository(Supabase.instance.client);
+        final profile = await authRepo.getUserProfile(session.user.id);
+        if (!mounted) return;
+
+        final role = profile?['role'] as String? ?? 'passenger';
+        final isPendingReview = profile?['status'] == 'pending_review';
+
+        if (role == 'driver') {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => DriverMainLayout(isPendingReview: isPendingReview),
+            ),
+          );
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const PassengerMainLayout()),
+          );
+        }
+      } catch (e) {
+        // Fallback to passenger layout on error
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const PassengerMainLayout()),
+          );
+        }
+      }
     }
   }
 

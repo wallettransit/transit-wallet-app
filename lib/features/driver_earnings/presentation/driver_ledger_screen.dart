@@ -12,13 +12,13 @@ class DriverLedgerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.ink,
+      backgroundColor: Colors.white, // Light background
       body: Container(
         decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-            center: Alignment(-0.8, -0.8),
-            radius: 1.5,
+          gradient: LinearGradient(
+            colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)], // Soft light gradient
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
         child: SafeArea(
@@ -35,7 +35,7 @@ class DriverLedgerScreen extends StatelessWidget {
                       Text(
                         'Daily Ledger',
                         style: GoogleFonts.outfit(
-                          color: AppTheme.paper,
+                          color: AppTheme.ink, // Dark text
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           height: 25.2 / 20,
@@ -45,7 +45,7 @@ class DriverLedgerScreen extends StatelessWidget {
                       Text(
                         'Automated ledger of your transit earnings',
                         style: GoogleFonts.manrope(
-                          color: AppTheme.muted,
+                          color: Colors.grey[600], // Darker muted text
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           height: 19.5 / 13,
@@ -70,9 +70,9 @@ class DriverLedgerScreen extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(12.0),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.03),
+                            color: Colors.white.withOpacity(0.7), // Light glass
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                            border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,7 +80,7 @@ class DriverLedgerScreen extends StatelessWidget {
                               Text(
                                 'GROSS FARES',
                                 style: GoogleFonts.manrope(
-                                  color: AppTheme.muted,
+                                  color: Colors.grey[600],
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   height: 15.0 / 10,
@@ -90,7 +90,7 @@ class DriverLedgerScreen extends StatelessWidget {
                               Text(
                                 '₦22,100',
                                 style: GoogleFonts.manrope(
-                                  color: AppTheme.paper,
+                                  color: AppTheme.ink, // Dark text
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
                                   height: 19.1 / 14,
@@ -111,9 +111,9 @@ class DriverLedgerScreen extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(12.0),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.03),
+                            color: Colors.white.withOpacity(0.7), // Light glass
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                            border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +121,7 @@ class DriverLedgerScreen extends StatelessWidget {
                               Text(
                                 'DEDUCTIONS',
                                 style: GoogleFonts.manrope(
-                                  color: AppTheme.muted,
+                                  color: Colors.grey[600],
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   height: 15.0 / 10,
@@ -230,7 +230,7 @@ class DriverLedgerScreen extends StatelessWidget {
         Text(
           date,
           style: GoogleFonts.manrope(
-            color: AppTheme.muted,
+            color: Colors.grey[600], // Darker muted
             fontSize: 14,
             fontWeight: FontWeight.w700,
             height: 21.0 / 14,
@@ -255,9 +255,9 @@ class DriverLedgerScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 8.0),
                     padding: const EdgeInsets.all(14.0),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.03),
+                      color: Colors.white.withOpacity(0.7), // Light glass
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                      border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
                     ),
                     child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -286,7 +286,7 @@ class DriverLedgerScreen extends StatelessWidget {
                             Text(
                               item.title,
                               style: GoogleFonts.manrope(
-                                color: AppTheme.paper,
+                                color: AppTheme.ink, // Dark text
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -294,7 +294,7 @@ class DriverLedgerScreen extends StatelessWidget {
                             Text(
                               item.subtitle,
                               style: GoogleFonts.manrope(
-                                color: AppTheme.muted,
+                                color: Colors.grey[600],
                                 fontSize: 12,
                               ),
                             ),

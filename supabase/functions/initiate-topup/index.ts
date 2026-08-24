@@ -32,10 +32,10 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email: email || "user@transitwallet.com",
+        email: email || "user@oyapay.com",
         amount: amount_kobo, // strictly kobo
         reference: reference,
-        callback_url: "https://transitwallet.app/topup/callback", 
+        callback_url: "https://oyapay.app/topup/callback", 
         metadata: {
           user_id: user_id
         }

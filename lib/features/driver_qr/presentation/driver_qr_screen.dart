@@ -146,7 +146,7 @@ class DriverQrScreen extends StatelessWidget {
                                 const Icon(Icons.directions_bus, size: 20, color: AppTheme.ink),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'TransitWallet Pay',
+                                  'OyaPayWallet Pay',
                                   style: GoogleFonts.outfit(
                                     color: AppTheme.ink,
                                     fontSize: 14,

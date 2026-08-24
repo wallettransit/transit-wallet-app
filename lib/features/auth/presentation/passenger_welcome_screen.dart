@@ -49,7 +49,7 @@ class PassengerWelcomeScreen extends StatelessWidget {
                     
                     // Welcome Text
                     Text(
-                      'Welcome to\nTransitWallet!',
+                      'Welcome to\nOyaPayWallet!',
                       style: AppTypography.heading1.copyWith(
                         color: AppColors.paper,
                         fontSize: 36,

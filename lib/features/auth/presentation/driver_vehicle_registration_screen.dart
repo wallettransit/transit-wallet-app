@@ -43,7 +43,7 @@ class _DriverVehicleRegistrationScreenState extends ConsumerState<DriverVehicleR
     
     // In a real scenario, this is the path returned from image_picker.
     // For now, we mock the path to a bundled asset or throw an error if missing.
-    // _photoPath = '/data/user/0/com.transitwallet/cache/image.jpg';
+    // _photoPath = '/data/user/0/com.oyapay/cache/image.jpg';
 
     setState(() => _isLoading = true);
 

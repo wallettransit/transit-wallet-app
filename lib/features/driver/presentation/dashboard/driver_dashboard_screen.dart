@@ -12,6 +12,8 @@ import '../../data/driver_repository.dart';
 import '../../../../core/components/tw_updates_carousel.dart';
 import '../../../group_ride/data/group_ride_repository.dart';
 import '../../../../core/components/tw_snackbar.dart';
+import '../../../../core/components/tw_skeleton_loader.dart';
+import 'driver_help_screen.dart';
 
 class DriverDashboardScreen extends ConsumerStatefulWidget {
   const DriverDashboardScreen({super.key});
@@ -22,6 +24,7 @@ class DriverDashboardScreen extends ConsumerStatefulWidget {
 
 class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
   bool _isCashOutLoading = false;
+  bool _isBalanceHidden = false;
 
   void _handleCashOut() async {
     setState(() => _isCashOutLoading = true);
@@ -120,10 +123,58 @@ class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
                                     ),
                                   ],
                                 ),
-                                const TWProfileAvatar(
-                                  initials: 'DR',
-                                  imageUrl: null, // Fallback to placeholder
-                                  radius: 24,
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Help Icon with Pill
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const DriverHelpScreen()),
+                                        );
+                                      },
+                                      child: Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.ink, // Using ink instead of cardBackground for contrast on driver dashboard
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: Colors.white10),
+                                            ),
+                                            child: const Icon(Icons.headset_mic_outlined, color: AppColors.paper, size: 20),
+                                          ),
+                                          Positioned(
+                                            top: -4,
+                                            right: -4,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.errorRed.withOpacity(0.2),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                'HELP',
+                                                style: GoogleFonts.manrope(
+                                                  color: AppColors.errorRed,
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const TWProfileAvatar(
+                                      initials: 'DR',
+                                      imageUrl: null, // Fallback to placeholder
+                                      radius: 24,
+                                    ),
+                                  ],
                                 ),
                               ],
                             ).animate().fade().slideY(begin: -0.1),
@@ -166,6 +217,16 @@ class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
+                                      const Spacer(),
+                                      GestureDetector(
+                                        onTap: () => setState(() => _isBalanceHidden = !_isBalanceHidden),
+                                        child: Icon(
+                                          _isBalanceHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                          color: Colors.white70,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                         decoration: BoxDecoration(
@@ -185,25 +246,27 @@ class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   balanceAsync.when(
-                                    data: (balance) => Text(
-                                      '₦${balance.toStringAsFixed(0)}',
-                                      style: GoogleFonts.outfit(
-                                        color: AppColors.ink,
-                                        fontSize: 40,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                    loading: () => const SizedBox(
-                                      height: 48,
-                                      child: Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: SizedBox(
-                                          width: 24, 
-                                          height: 24, 
-                                          child: CircularProgressIndicator(color: AppColors.ink, strokeWidth: 2)
+                                    data: (balance) {
+                                      if (_isBalanceHidden) {
+                                        return Text(
+                                          '••••',
+                                          style: GoogleFonts.outfit(
+                                            color: AppColors.ink,
+                                            fontSize: 40,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        );
+                                      }
+                                      return Text(
+                                        '₦${balance.toStringAsFixed(0)}',
+                                        style: GoogleFonts.outfit(
+                                          color: AppColors.ink,
+                                          fontSize: 40,
+                                          fontWeight: FontWeight.w900,
                                         ),
-                                      ),
-                                    ),
+                                      );
+                                    },
+                                    loading: () => const TWSkeletonLoader(width: 120, height: 40, borderRadius: 8),
                                     error: (_, __) => Text(
                                       'Error loading',
                                       style: GoogleFonts.outfit(color: AppColors.ink, fontSize: 24, fontWeight: FontWeight.bold),

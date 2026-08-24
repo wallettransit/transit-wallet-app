@@ -16,39 +16,27 @@ class TWLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double containerSize = size * 1.8;
-    
-    final Widget logoIcon = Container(
-      width: containerSize,
-      height: containerSize,
-      decoration: BoxDecoration(
-        color: AppColors.kekeGreen,
-        borderRadius: BorderRadius.circular(containerSize * 0.3),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.account_balance_wallet,
-          color: AppColors.paper,
-          size: size,
-        ),
-      ),
-    );
-
-    if (!showText) return logoIcon;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        logoIcon,
-        SizedBox(width: size * 0.4),
-        Text(
-          'OyaPay',
-          style: AppTypography.heading1.copyWith(
-            fontSize: size,
-            color: textColor,
-          ),
-        ),
-      ],
+    return Image.asset(
+      'assets/images/oyapay_logo.png',
+      height: size * 1.5,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        // Fallback if the image doesn't load for some reason
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.account_balance_wallet, color: AppColors.kekeGreen, size: size),
+            SizedBox(width: size * 0.4),
+            Text(
+              'OyaPay',
+              style: AppTypography.heading1.copyWith(
+                fontSize: size,
+                color: textColor,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

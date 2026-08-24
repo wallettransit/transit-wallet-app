@@ -51,7 +51,7 @@ class _PassengerGroupPaymentScreenState extends ConsumerState<PassengerGroupPaym
         data: (balance) => _buildPaymentOption(
           index: 0,
           icon: Icons.account_balance_wallet,
-          title: 'TransitWallet Balance',
+          title: 'OyaPayWallet Balance',
           subtitle: 'Available: ₦${balance.toStringAsFixed(2)}',
         ),
         loading: () => const CircularProgressIndicator(color: AppColors.kekeGreen),

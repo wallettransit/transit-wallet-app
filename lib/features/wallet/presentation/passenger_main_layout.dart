@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import '../../../core/theme/app_colors.dart';
-import 'passenger_wallet_screen.dart';
+import 'passenger_map_home_screen.dart';
 import 'passenger_qr_scan_screen.dart';
 import 'passenger_ride_history_screen.dart';
 import '../../profile/presentation/passenger_me_screen.dart';
@@ -21,7 +20,7 @@ class _PassengerMainLayoutState extends State<PassengerMainLayout> {
   late int _currentIndex;
 
   late final List<Widget> _screens = [
-    const PassengerWalletScreen(),
+    const PassengerMapHomeScreen(),
     const PassengerQrScanScreen(),
     const PassengerRideHistoryScreen(),
     const PassengerMeScreen(),

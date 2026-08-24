@@ -38,7 +38,7 @@ class RoleSelectionScreen extends StatelessWidget {
               const SizedBox(height: 8),
               
               Text(
-                'Are you commuting or driving? Select how you want to use TransitWallet today.',
+                'Are you commuting or driving? Select how you want to use OyaPayWallet today.',
                 style: AppTypography.bodyLarge.copyWith(color: AppColors.muted),
               ).animate().fade(duration: 500.ms, delay: 100.ms).slideY(begin: 0.1, end: 0),
               

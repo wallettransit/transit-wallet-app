@@ -232,7 +232,7 @@ class _DriverRegistrationScreenState extends ConsumerState<DriverRegistrationScr
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                "I agree to TransitWallet's Terms of Service and Privacy Policy.",
+                                "I agree to OyaPayWallet's Terms of Service and Privacy Policy.",
                                 style: GoogleFonts.manrope(
                                   color: AppTheme.muted,
                                   fontSize: 14,

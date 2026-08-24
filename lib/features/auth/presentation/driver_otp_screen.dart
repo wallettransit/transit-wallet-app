@@ -6,6 +6,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
 import 'driver_vehicle_registration_screen.dart';
 import '../../../../core/components/tw_logo.dart';
+import '../../../../core/components/tw_snackbar.dart';
+import '../../../../core/services/email_otp_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DriverOtpScreen extends StatefulWidget {
   final String phone;
@@ -161,11 +164,24 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                         const SizedBox(height: 16),
                         if (widget.email != null && widget.email!.isNotEmpty)
                           GestureDetector(
-                            onTap: () {
+                            onTap: () async {
                               setState(() {
                                 _useEmail = !_useEmail;
                               });
-                              // Add logic to trigger resend to the new destination if needed
+                              if (_useEmail) {
+                                try {
+                                  final email = widget.email ?? Supabase.instance.client.auth.currentUser?.email;
+                                  if (email == null) throw Exception('No email available');
+                                  await EmailOtpService.sendOtp(email);
+                                  if (mounted) {
+                                    TWSnackbar.showSuccess(context, 'Testing OTP (1234) sent to email!');
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    TWSnackbar.showError(context, e.toString());
+                                  }
+                                }
+                              }
                             },
                             child: Text(
                               _useEmail ? 'Send code to Phone instead?' : 'Send code to Email instead?',
